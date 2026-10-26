@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import type { FastifyInstance } from 'fastify';
@@ -6,6 +7,8 @@ import { WS_CLOSE_SESSION_NOT_FOUND, clientMessageSchema } from '@integrasi/shar
 import type { CliRegistry } from '../clis/cli-registry';
 import { cliLaunchArgs } from '../clis/cli-registry';
 import type { ProjectStore } from '../projects/project-store';
+import type { ClaudeHookSetup } from '../sessions/claude-hooks';
+import { prepareClaudeHooks } from '../sessions/claude-hooks';
 import type { SessionManager } from '../sessions/session-manager';
 
 // The command to run is never taken from the request: only a cliId that maps to the config file.
@@ -22,11 +25,13 @@ export interface SessionRoutesOptions {
   sessions: SessionManager;
   clis: CliRegistry;
   projects: ProjectStore;
+  /** Port hooks call back on. */
+  port: number;
 }
 
 export async function sessionRoutes(
   app: FastifyInstance,
-  { sessions, clis, projects }: SessionRoutesOptions,
+  { sessions, clis, projects, port }: SessionRoutesOptions,
 ) {
   app.get('/api/sessions', async () => sessions.list());
 
@@ -46,20 +51,24 @@ export async function sessionRoutes(
       return reply.code(400).send({ error: 'cwd is not a directory' });
     }
 
+    const id = randomUUID();
     const shell = clis.shell;
     let args = shell.args;
+    let hooks: ClaudeHookSetup | undefined;
     let title = 'Shell';
     let waitingPatterns: RegExp[] = [];
     if (cliId !== undefined) {
       const cli = clis.get(cliId);
       if (!cli) return reply.code(400).send({ error: `unknown cli "${cliId}"` });
       if (!cli.enabled) return reply.code(400).send({ error: `cli "${cliId}" is disabled` });
-      args = cliLaunchArgs(shell, cli);
+      if (cli.statusMode === 'hooks') hooks = prepareClaudeHooks(id, port);
+      args = cliLaunchArgs(shell, cli, hooks?.args);
       title = cli.name;
       waitingPatterns = cli.waitingPatterns.map((p) => new RegExp(p));
     }
 
     const session = sessions.create({
+      id,
       file: shell.file,
       args,
       cwd,
@@ -69,6 +78,8 @@ export async function sessionRoutes(
       cliId: cliId ?? null,
       title,
       waitingPatterns,
+      hookSecret: hooks?.secret,
+      cleanup: hooks?.cleanup,
     });
     return reply.code(201).send(session.info());
   });

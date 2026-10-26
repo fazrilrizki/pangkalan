@@ -28,6 +28,10 @@ export interface SessionOptions {
   scrollbackChars: number;
   status: StatusTrackerOptions;
   statusIntervalMs: number;
+  /** Secret the CLI's hooks must present to report status (kept out of `info()`). */
+  hookSecret?: string;
+  /** Runs once when the process ends, e.g. to delete per-session temp files. */
+  cleanup?: () => void;
 }
 
 /** A running PTY plus its scrollback. Lives independently of any connected client. */
@@ -40,6 +44,7 @@ export class Session {
   private status: SessionStatus = 'working';
   private exitCode: number | null = null;
   private killRequested = false;
+  readonly hookSecret: string | null;
 
   constructor(
     readonly meta: SessionMeta,
@@ -47,6 +52,7 @@ export class Session {
     options: SessionOptions,
   ) {
     this.buffer = new RingBuffer(options.scrollbackChars);
+    this.hookSecret = options.hookSecret ?? null;
     this.tracker = new StatusTracker(options.status);
     this.statusTimer = setInterval(() => this.refreshStatus(), options.statusIntervalMs);
     this.statusTimer.unref();
@@ -58,6 +64,7 @@ export class Session {
     });
     pty.onExit((code) => {
       clearInterval(this.statusTimer);
+      options.cleanup?.();
       this.exitCode = code;
       this.setStatus(this.killRequested || code === 0 ? 'exited' : 'error');
       this.broadcast({ type: 'exit', code });

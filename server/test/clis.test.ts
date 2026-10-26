@@ -101,7 +101,7 @@ describe('CLI sessions over the API', () => {
 
   it('lists CLIs from the config file', async () => {
     const body = (await (await server.api('/api/clis')).json()) as { clis: CliInfo[] };
-    expect(body.clis.map((c) => c.id)).toEqual(['fake', 'off']);
+    expect(body.clis.map((c) => c.id)).toEqual(['fake', 'off', 'fake-hooks']);
   });
 
   it('launches the configured command for a cliId', async () => {

@@ -99,10 +99,16 @@ const quotePowerShell = (value: string) => `'${value.replaceAll("'", "''")}'`;
  * Builds the shell invocation for a CLI. Running through the user's shell keeps their PATH,
  * aliases and profile; the session ends when the CLI exits.
  */
-export function cliLaunchArgs(shell: ShellConfig, cli: CliConfig): string[] {
-  const commandLine = ['&', quotePowerShell(cli.command), ...cli.args.map(quotePowerShell)].join(
-    ' ',
-  );
+export function cliLaunchArgs(
+  shell: ShellConfig,
+  cli: CliConfig,
+  extraArgs: string[] = [],
+): string[] {
+  const commandLine = [
+    '&',
+    quotePowerShell(cli.command),
+    ...[...cli.args, ...extraArgs].map(quotePowerShell),
+  ].join(' ');
   // Without the explicit exit, PowerShell collapses any CLI failure to exit code 1.
   return [...shell.args, '-Command', `${commandLine}; exit $LASTEXITCODE`];
 }

@@ -5,6 +5,7 @@ import { CliRegistry } from './clis/cli-registry';
 import type { ServerConfig } from './config';
 import { ProjectStore } from './projects/project-store';
 import { cliRoutes } from './routes/clis';
+import { hookRoutes } from './routes/hooks';
 import { projectRoutes } from './routes/projects';
 import { sessionRoutes } from './routes/sessions';
 import { registerSecurity } from './security/auth';
@@ -45,7 +46,8 @@ export async function buildApp({
   app.get('/api/health', async () => ({ ok: true }));
   await app.register(cliRoutes, { clis: registry });
   await app.register(projectRoutes, { projects });
-  await app.register(sessionRoutes, { sessions, clis: registry, projects });
+  await app.register(sessionRoutes, { sessions, clis: registry, projects, port: config.port });
+  await app.register(hookRoutes, { sessions });
 
   app.addHook('onClose', async () => {
     sessions.killAll();

@@ -21,6 +21,8 @@ export interface CreateSessionOptions extends Omit<SessionMeta, 'id'> {
   cols?: number;
   rows?: number;
   waitingPatterns?: RegExp[];
+  hookSecret?: string;
+  cleanup?: () => void;
 }
 
 export class SessionManager {
@@ -35,14 +37,24 @@ export class SessionManager {
     cols = 120,
     rows = 30,
     waitingPatterns = [],
+    hookSecret,
+    cleanup,
     ...meta
   }: CreateSessionOptions & { id?: string }): Session {
     const id = meta.id ?? randomUUID();
-    const pty = spawnPty({ file, args, cwd: meta.cwd, cols, rows, env });
+    let pty;
+    try {
+      pty = spawnPty({ file, args, cwd: meta.cwd, cols, rows, env });
+    } catch (err) {
+      cleanup?.();
+      throw err;
+    }
     const session = new Session({ ...meta, id }, pty, {
       scrollbackChars: this.options.scrollbackChars ?? DEFAULT_SCROLLBACK_CHARS,
       statusIntervalMs: this.options.statusIntervalMs ?? 250,
       status: { ...this.options.status, waitingPatterns },
+      hookSecret,
+      cleanup,
     });
     this.sessions.set(id, session);
     return session;

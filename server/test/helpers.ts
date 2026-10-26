@@ -28,6 +28,13 @@ export const TEST_CLIS_FILE = {
       waitingPatterns: ['\\(y/n\\)\\s*$'],
     },
     { id: 'off', name: 'Disabled CLI', command: 'nope', enabled: false },
+    {
+      id: 'fake-hooks',
+      name: 'Fake Hooks CLI',
+      command: process.execPath,
+      args: [FAKE_CLI_PATH],
+      statusMode: 'hooks',
+    },
   ],
 };
 
