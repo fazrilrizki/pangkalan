@@ -13,6 +13,7 @@
     "@fastify/static": "10.1.7",
     "@fastify/websocket": "11.3.4",
     "@integrasi/shared": "*",
+    "@lydell/node-pty": "^1.2.0-beta.18",
     "fastify": "5.12.7",
     "tsx": "4.23.15",
     "zod": "4.6.7"

@@ -118,3 +118,7 @@ Paralel aman (jika ada >1 sesi kerja): T2 ‖ T3; T6 ‖ T7; T11 ‖ T12.
 
 - Command Antigravity (blocking hanya untuk T15).
 - Boleh `git init` di T1? (dibutuhkan agar "test sebelum commit" bermakna) — default: ya, tanya saat T1.
+
+## Catatan Implementasi
+
+- **T2 (2026-10-26):** Paket PTY = `@lydell/node-pty@1.2.0-beta.18` (prebuilt `win32-x64`, tanpa VS Build Tools). Terbukti spawn `powershell.exe`, echo, resize, kill di Node v24.0.1. Kill via ConPTY memberi exit code `-1073741510` (`STATUS_CONTROL_C_EXIT`) → kill yang diminta user dianggap `exited`, bukan `error`.
