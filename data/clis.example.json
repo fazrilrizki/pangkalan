@@ -1,0 +1,30 @@
+{
+  "shell": {
+    "file": "powershell.exe",
+    "args": ["-NoLogo"]
+  },
+  "clis": [
+    {
+      "id": "claude",
+      "name": "Claude Code",
+      "command": "claude",
+      "args": [],
+      "icon": "claude",
+      "color": "#D97757",
+      "statusMode": "hooks",
+      "waitingPatterns": ["Do you want to", "❯ 1\\. Yes", "\\(y/n\\)"],
+      "enabled": true
+    },
+    {
+      "id": "antigravity",
+      "name": "Antigravity",
+      "command": "antigravity",
+      "args": [],
+      "icon": "antigravity",
+      "color": "#4285F4",
+      "statusMode": "heuristic",
+      "waitingPatterns": ["\\(y/n\\)", "\\? .*$"],
+      "enabled": false
+    }
+  ]
+}

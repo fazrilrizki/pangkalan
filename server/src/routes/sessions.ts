@@ -3,9 +3,13 @@ import os from 'node:os';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { WS_CLOSE_SESSION_NOT_FOUND, clientMessageSchema } from '@integrasi/shared';
+import type { CliRegistry } from '../clis/cli-registry';
+import { cliLaunchArgs } from '../clis/cli-registry';
 import type { SessionManager } from '../sessions/session-manager';
 
+// The command to run is never taken from the request: only a cliId that maps to the config file.
 const createSessionSchema = z.object({
+  cliId: z.string().optional(),
   cwd: z
     .string()
     .min(1)
@@ -16,31 +20,44 @@ const createSessionSchema = z.object({
 
 export interface SessionRoutesOptions {
   sessions: SessionManager;
-  shell: { file: string; args: string[] };
+  clis: CliRegistry;
 }
 
 export async function sessionRoutes(
   app: FastifyInstance,
-  { sessions, shell }: SessionRoutesOptions,
+  { sessions, clis }: SessionRoutesOptions,
 ) {
   app.get('/api/sessions', async () => sessions.list());
 
   app.post('/api/sessions', async (request, reply) => {
     const parsed = createSessionSchema.safeParse(request.body);
     if (!parsed.success) return reply.code(400).send({ error: 'invalid body' });
-    const { cwd, cols, rows } = parsed.data;
+    const { cliId, cwd, cols, rows } = parsed.data;
+
     if (!fs.statSync(cwd, { throwIfNoEntry: false })?.isDirectory()) {
       return reply.code(400).send({ error: 'cwd is not a directory' });
     }
+
+    const shell = clis.shell;
+    let args = shell.args;
+    let title = 'Shell';
+    if (cliId !== undefined) {
+      const cli = clis.get(cliId);
+      if (!cli) return reply.code(400).send({ error: `unknown cli "${cliId}"` });
+      if (!cli.enabled) return reply.code(400).send({ error: `cli "${cliId}" is disabled` });
+      args = cliLaunchArgs(shell, cli);
+      title = cli.name;
+    }
+
     const session = sessions.create({
       file: shell.file,
-      args: shell.args,
+      args,
       cwd,
       cols,
       rows,
       projectId: null,
-      cliId: null,
-      title: 'Shell',
+      cliId: cliId ?? null,
+      title,
     });
     return reply.code(201).send(session.info());
   });

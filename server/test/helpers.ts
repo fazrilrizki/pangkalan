@@ -1,3 +1,7 @@
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import WebSocket from 'ws';
 import type { ServerMessage } from '@integrasi/shared';
 import type { AppOptions } from '../src/app';
@@ -10,9 +14,37 @@ export const APP_ORIGIN = 'http://127.0.0.1:4317';
 export const authHeaders = { host: '127.0.0.1:4317', authorization: `Bearer ${TEST_TOKEN}` };
 
 export const TEST_SHELL = { file: 'powershell.exe', args: ['-NoLogo', '-NoProfile'] };
+export const FAKE_CLI_PATH = fileURLToPath(new URL('./fixtures/fake-cli.mjs', import.meta.url));
+
+export const TEST_CLIS_FILE = {
+  shell: TEST_SHELL,
+  clis: [
+    {
+      id: 'fake',
+      name: 'Fake CLI',
+      command: process.execPath,
+      args: [FAKE_CLI_PATH],
+      color: '#123456',
+      waitingPatterns: ['\\(y/n\\)\\s*$'],
+    },
+    { id: 'off', name: 'Disabled CLI', command: 'nope', enabled: false },
+  ],
+};
+
+/** A throwaway data dir so tests never touch the real data/ folder. */
+export function makeDataDir(clisFile: unknown = TEST_CLIS_FILE): string {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'integrasi-test-'));
+  fs.writeFileSync(path.join(dir, 'clis.json'), JSON.stringify(clisFile, null, 2));
+  return dir;
+}
 
 export function testConfig(env: NodeJS.ProcessEnv = {}, overrides: Partial<ServerConfig> = {}) {
-  return { ...loadConfig({ NODE_ENV: 'test', ...env }), shell: TEST_SHELL, ...overrides };
+  const dataDir = env.INTEGRASI_DATA_DIR ?? makeDataDir();
+  return {
+    ...loadConfig({ NODE_ENV: 'test', ...env, INTEGRASI_DATA_DIR: dataDir }),
+    shell: TEST_SHELL,
+    ...overrides,
+  };
 }
 
 export async function buildTestApp(

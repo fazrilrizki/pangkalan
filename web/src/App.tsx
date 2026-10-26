@@ -1,31 +1,51 @@
 import { useEffect, useState } from 'react';
-import type { SessionInfo } from '@integrasi/shared';
+import type { CliInfo, SessionInfo } from '@integrasi/shared';
 import { TerminalPane } from './components/TerminalPane';
 import { ApiError, apiFetch } from './lib/api';
 
 export function App() {
   const [session, setSession] = useState<SessionInfo | null>(null);
+  const [clis, setClis] = useState<CliInfo[]>([]);
+  const [cliId, setCliId] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    const onError = (err: unknown) =>
+      setError(err instanceof ApiError && err.status === 401 ? 'Token tidak valid' : String(err));
     apiFetch<SessionInfo[]>('/api/sessions')
       .then((sessions) => setSession(sessions[0] ?? null))
-      .catch((err: unknown) =>
-        setError(err instanceof ApiError && err.status === 401 ? 'Token tidak valid' : String(err)),
-      );
+      .catch(onError);
+    apiFetch<{ clis: CliInfo[] }>('/api/clis')
+      .then(({ clis }) => setClis(clis))
+      .catch(onError);
   }, []);
 
   async function createSession() {
-    setSession(await apiFetch<SessionInfo>('/api/sessions', { method: 'POST', body: '{}' }));
+    const body = cliId ? { cliId } : {};
+    setSession(
+      await apiFetch<SessionInfo>('/api/sessions', { method: 'POST', body: JSON.stringify(body) }),
+    );
   }
 
   return (
     <main className="flex h-full flex-col font-sans">
       <header className="flex items-center gap-3 border-b border-white/10 px-4 py-2">
         <span className="font-semibold">Integrasi AI</span>
+        <select
+          className="rounded bg-white/10 px-2 py-1 text-sm"
+          value={cliId}
+          onChange={(e) => setCliId(e.target.value)}
+        >
+          <option value="">Shell</option>
+          {clis.map((cli) => (
+            <option key={cli.id} value={cli.id} disabled={!cli.enabled}>
+              {cli.name}
+            </option>
+          ))}
+        </select>
         <button
           className="rounded bg-white/10 px-3 py-1 text-sm hover:bg-white/20"
-          onClick={() => void createSession()}
+          onClick={() => void createSession().catch((err: unknown) => setError(String(err)))}
         >
           Sesi baru
         </button>
