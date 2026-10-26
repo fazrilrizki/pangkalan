@@ -3,7 +3,7 @@ import { WebLinksAddon } from '@xterm/addon-web-links';
 import { WebglAddon } from '@xterm/addon-webgl';
 import { Terminal } from '@xterm/xterm';
 import '@xterm/xterm/css/xterm.css';
-import { useEffect, useRef } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 import type { ServerMessage } from '@integrasi/shared';
 import { wsUrl } from '../lib/api';
 import type { ConnectionState } from '../lib/ws-client';
@@ -30,7 +30,7 @@ export function TerminalPane({
   const handlersRef = useRef({ onServerMessage, onConnectionChange });
   handlersRef.current = { onServerMessage, onConnectionChange };
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const container = containerRef.current!;
     const terminal = new Terminal({
       cursorBlink: true,
@@ -99,16 +99,17 @@ export function TerminalPane({
     };
   }, [sessionId]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!active) return;
     const terminal = terminalRef.current;
     const fit = fitRef.current;
     if (!terminal || !fit) return;
+    // Focus right away so keystrokes typed just after switching tabs are not lost.
+    terminal.focus();
     // Wait a frame so the now-visible container has its real size.
     const frame = requestAnimationFrame(() => {
       fit.fit();
       socketRef.current?.send({ type: 'resize', cols: terminal.cols, rows: terminal.rows });
-      terminal.focus();
     });
     return () => cancelAnimationFrame(frame);
   }, [active]);

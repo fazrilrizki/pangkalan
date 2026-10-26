@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Sidebar } from './components/Sidebar';
+import { TabBar } from './components/TabBar';
 import { TerminalPane } from './components/TerminalPane';
 import { ApiError } from './lib/api';
 import { useAppStore } from './stores/app-store';
@@ -36,6 +37,7 @@ export function App() {
             </button>
           </div>
         )}
+        <TabBar />
         <section className="relative min-h-0 flex-1 bg-[#0d1017] p-2">
           {order.map((id) => (
             <TerminalPane
