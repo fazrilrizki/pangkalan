@@ -49,12 +49,14 @@ export async function sessionRoutes(
     const shell = clis.shell;
     let args = shell.args;
     let title = 'Shell';
+    let waitingPatterns: RegExp[] = [];
     if (cliId !== undefined) {
       const cli = clis.get(cliId);
       if (!cli) return reply.code(400).send({ error: `unknown cli "${cliId}"` });
       if (!cli.enabled) return reply.code(400).send({ error: `cli "${cliId}" is disabled` });
       args = cliLaunchArgs(shell, cli);
       title = cli.name;
+      waitingPatterns = cli.waitingPatterns.map((p) => new RegExp(p));
     }
 
     const session = sessions.create({
@@ -66,6 +68,7 @@ export async function sessionRoutes(
       projectId: projectId ?? null,
       cliId: cliId ?? null,
       title,
+      waitingPatterns,
     });
     return reply.code(201).send(session.info());
   });

@@ -77,7 +77,9 @@ function Tab({
       className={`group relative flex max-w-60 min-w-36 items-center gap-2 rounded-t-lg border border-b-0 pr-1 pl-3 text-sm transition-colors ${
         active
           ? 'border-line bg-[#0d1017] text-fg'
-          : 'border-transparent text-muted hover:bg-white/[0.03] hover:text-fg'
+          : session.status === 'waiting'
+            ? 'border-waiting/40 bg-waiting/[0.06] text-fg shadow-[0_-2px_14px_-4px_var(--color-waiting)]'
+            : 'border-transparent text-muted hover:bg-white/[0.03] hover:text-fg'
       }`}
     >
       {active && (

@@ -2,6 +2,8 @@ import { spawnSync } from 'node:child_process';
 import type { ServerMessage, SessionInfo, SessionStatus } from '@integrasi/shared';
 import type { PtyProcess } from './pty';
 import { RingBuffer } from './ring-buffer';
+import type { LiveStatus, StatusTrackerOptions } from './status-detector';
+import { StatusTracker } from './status-detector';
 
 export type SessionListener = (message: ServerMessage) => void;
 
@@ -22,28 +24,40 @@ export interface SessionMeta {
   cwd: string;
 }
 
+export interface SessionOptions {
+  scrollbackChars: number;
+  status: StatusTrackerOptions;
+  statusIntervalMs: number;
+}
+
 /** A running PTY plus its scrollback. Lives independently of any connected client. */
 export class Session {
   private readonly buffer: RingBuffer;
   private readonly listeners = new Set<SessionListener>();
   private readonly createdAt = new Date().toISOString();
+  private readonly tracker: StatusTracker;
+  private readonly statusTimer: ReturnType<typeof setInterval>;
   private status: SessionStatus = 'working';
   private exitCode: number | null = null;
   private killRequested = false;
-  lastOutputAt = Date.now();
 
   constructor(
     readonly meta: SessionMeta,
     private readonly pty: PtyProcess,
-    scrollbackChars: number,
+    options: SessionOptions,
   ) {
-    this.buffer = new RingBuffer(scrollbackChars);
+    this.buffer = new RingBuffer(options.scrollbackChars);
+    this.tracker = new StatusTracker(options.status);
+    this.statusTimer = setInterval(() => this.refreshStatus(), options.statusIntervalMs);
+    this.statusTimer.unref();
+
     pty.onData((data) => {
-      this.lastOutputAt = Date.now();
       this.buffer.push(data);
+      this.tracker.onOutput(data);
       this.broadcast({ type: 'output', data });
     });
     pty.onExit((code) => {
+      clearInterval(this.statusTimer);
       this.exitCode = code;
       this.setStatus(this.killRequested || code === 0 ? 'exited' : 'error');
       this.broadcast({ type: 'exit', code });
@@ -81,17 +95,20 @@ export class Session {
   }
 
   write(data: string) {
-    if (this.isRunning) this.pty.write(data);
+    if (!this.isRunning) return;
+    this.tracker.onInput();
+    this.pty.write(data);
   }
 
   resize(cols: number, rows: number) {
     if (this.isRunning) this.pty.resize(cols, rows);
   }
 
-  setStatus(status: SessionStatus) {
-    if (status === this.status) return;
-    this.status = status;
-    this.broadcast({ type: 'status', status });
+  /** Status reported by the CLI itself (e.g. Claude Code hooks). */
+  reportStatus(status: LiveStatus) {
+    if (!this.isRunning) return;
+    this.tracker.onHook(status);
+    this.refreshStatus();
   }
 
   kill() {
@@ -99,6 +116,21 @@ export class Session {
     this.killRequested = true;
     killProcessTree(this.pty.pid);
     this.pty.kill();
+  }
+
+  dispose() {
+    clearInterval(this.statusTimer);
+    this.kill();
+  }
+
+  private refreshStatus() {
+    if (this.isRunning) this.setStatus(this.tracker.current());
+  }
+
+  private setStatus(status: SessionStatus) {
+    if (status === this.status) return;
+    this.status = status;
+    this.broadcast({ type: 'status', status });
   }
 
   private broadcast(message: ServerMessage) {
