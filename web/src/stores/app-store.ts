@@ -1,0 +1,182 @@
+import { create } from 'zustand';
+import type {
+  CliInfo,
+  Project,
+  ServerMessage,
+  SessionInfo,
+  UpdateProjectInput,
+} from '@integrasi/shared';
+import { apiFetch } from '../lib/api';
+import type { ConnectionState } from '../lib/ws-client';
+
+export interface SessionView extends SessionInfo {
+  connection: ConnectionState;
+}
+
+const ACTIVE_KEY = 'integrasi.activeSession';
+
+function rememberActive(id: string | null) {
+  try {
+    if (id) localStorage.setItem(ACTIVE_KEY, id);
+    else localStorage.removeItem(ACTIVE_KEY);
+  } catch {
+    // per-viewer convenience only
+  }
+}
+
+function recallActive(): string | null {
+  try {
+    return localStorage.getItem(ACTIVE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+interface AppState {
+  loaded: boolean;
+  error: string | null;
+  projects: Project[];
+  clis: CliInfo[];
+  sessions: Record<string, SessionView>;
+  /** Tab order. */
+  order: string[];
+  activeId: string | null;
+
+  load(): Promise<void>;
+  reloadClis(): Promise<void>;
+  addProject(path: string, name?: string): Promise<Project>;
+  updateProject(id: string, changes: UpdateProjectInput): Promise<void>;
+  removeProject(id: string): Promise<void>;
+  openSession(projectId: string, cliId: string | null): Promise<void>;
+  closeSession(id: string): Promise<void>;
+  setActive(id: string): void;
+  cycleActive(step: 1 | -1): void;
+  applyServerMessage(id: string, message: ServerMessage): void;
+  setConnection(id: string, connection: ConnectionState): void;
+  setError(error: string | null): void;
+}
+
+const toView = (info: SessionInfo): SessionView => ({ ...info, connection: 'connecting' });
+
+export const useAppStore = create<AppState>()((set, get) => ({
+  loaded: false,
+  error: null,
+  projects: [],
+  clis: [],
+  sessions: {},
+  order: [],
+  activeId: null,
+
+  async load() {
+    const [projects, { clis }, sessions] = await Promise.all([
+      apiFetch<Project[]>('/api/projects'),
+      apiFetch<{ clis: CliInfo[] }>('/api/clis'),
+      apiFetch<SessionInfo[]>('/api/sessions'),
+    ]);
+    const ordered = [...sessions].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+    const remembered = recallActive();
+    const activeId = ordered.some((s) => s.id === remembered)
+      ? remembered
+      : (ordered[0]?.id ?? null);
+    set({
+      loaded: true,
+      projects,
+      clis,
+      sessions: Object.fromEntries(ordered.map((s) => [s.id, toView(s)])),
+      order: ordered.map((s) => s.id),
+      activeId,
+    });
+  },
+
+  async reloadClis() {
+    const { clis } = await apiFetch<{ clis: CliInfo[] }>('/api/clis');
+    set({ clis });
+  },
+
+  async addProject(path, name) {
+    const project = await apiFetch<Project>('/api/projects', {
+      method: 'POST',
+      body: JSON.stringify({ path, ...(name ? { name } : {}) }),
+    });
+    set((s) => ({ projects: [...s.projects, project] }));
+    return project;
+  },
+
+  async updateProject(id, changes) {
+    const project = await apiFetch<Project>(`/api/projects/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(changes),
+    });
+    set((s) => ({ projects: s.projects.map((p) => (p.id === id ? project : p)) }));
+  },
+
+  async removeProject(id) {
+    await apiFetch(`/api/projects/${id}`, { method: 'DELETE' });
+    set((s) => ({ projects: s.projects.filter((p) => p.id !== id) }));
+  },
+
+  async openSession(projectId, cliId) {
+    const info = await apiFetch<SessionInfo>('/api/sessions', {
+      method: 'POST',
+      body: JSON.stringify({ projectId, ...(cliId ? { cliId } : {}) }),
+    });
+    set((s) => ({
+      sessions: { ...s.sessions, [info.id]: toView(info) },
+      order: [...s.order, info.id],
+      activeId: info.id,
+    }));
+    rememberActive(info.id);
+  },
+
+  async closeSession(id) {
+    await apiFetch(`/api/sessions/${id}`, { method: 'DELETE' }).catch(() => {
+      // already gone on the server: still drop the tab
+    });
+    set((s) => {
+      const index = s.order.indexOf(id);
+      const order = s.order.filter((x) => x !== id);
+      const { [id]: _, ...sessions } = s.sessions;
+      const activeId =
+        s.activeId === id ? (order[Math.min(index, order.length - 1)] ?? null) : s.activeId;
+      rememberActive(activeId);
+      return { order, sessions, activeId };
+    });
+  },
+
+  setActive(id) {
+    if (!get().sessions[id]) return;
+    set({ activeId: id });
+    rememberActive(id);
+  },
+
+  cycleActive(step) {
+    const { order, activeId } = get();
+    if (order.length === 0) return;
+    const index = activeId ? order.indexOf(activeId) : -1;
+    const next = order[(index + step + order.length) % order.length]!;
+    get().setActive(next);
+  },
+
+  applyServerMessage(id, message) {
+    if (message.type !== 'status' && message.type !== 'exit') return;
+    set((s) => {
+      const session = s.sessions[id];
+      if (!session) return s;
+      const patch =
+        message.type === 'status' ? { status: message.status } : { exitCode: message.code };
+      return { sessions: { ...s.sessions, [id]: { ...session, ...patch } } };
+    });
+  },
+
+  setConnection(id, connection) {
+    set((s) => {
+      const session = s.sessions[id];
+      if (!session || session.connection === connection) return s;
+      return { sessions: { ...s.sessions, [id]: { ...session, connection } } };
+    });
+  },
+
+  setError(error) {
+    set({ error });
+  },
+}));

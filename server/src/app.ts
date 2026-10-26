@@ -3,7 +3,9 @@ import websocket from '@fastify/websocket';
 import Fastify from 'fastify';
 import { CliRegistry } from './clis/cli-registry';
 import type { ServerConfig } from './config';
+import { ProjectStore } from './projects/project-store';
 import { cliRoutes } from './routes/clis';
+import { projectRoutes } from './routes/projects';
 import { sessionRoutes } from './routes/sessions';
 import { registerSecurity } from './security/auth';
 import { SessionManager } from './sessions/session-manager';
@@ -38,9 +40,12 @@ export async function buildApp({
   registerSecurity(app, { token, allowedOrigins: config.allowedOrigins });
   await app.register(websocket, { options: { maxPayload: 1024 * 1024 } });
 
+  const projects = new ProjectStore(path.join(config.dataDir, 'projects.json'));
+
   app.get('/api/health', async () => ({ ok: true }));
   await app.register(cliRoutes, { clis: registry });
-  await app.register(sessionRoutes, { sessions, clis: registry });
+  await app.register(projectRoutes, { projects });
+  await app.register(sessionRoutes, { sessions, clis: registry, projects });
 
   app.addHook('onClose', async () => {
     sessions.killAll();

@@ -5,15 +5,15 @@ import { z } from 'zod';
 import { WS_CLOSE_SESSION_NOT_FOUND, clientMessageSchema } from '@integrasi/shared';
 import type { CliRegistry } from '../clis/cli-registry';
 import { cliLaunchArgs } from '../clis/cli-registry';
+import type { ProjectStore } from '../projects/project-store';
 import type { SessionManager } from '../sessions/session-manager';
 
 // The command to run is never taken from the request: only a cliId that maps to the config file.
 const createSessionSchema = z.object({
   cliId: z.string().optional(),
-  cwd: z
-    .string()
-    .min(1)
-    .default(() => os.homedir()),
+  /** When set, the session runs in the project's folder and `cwd` is ignored. */
+  projectId: z.string().optional(),
+  cwd: z.string().min(1).optional(),
   cols: z.number().int().min(2).max(1000).optional(),
   rows: z.number().int().min(2).max(500).optional(),
 });
@@ -21,18 +21,26 @@ const createSessionSchema = z.object({
 export interface SessionRoutesOptions {
   sessions: SessionManager;
   clis: CliRegistry;
+  projects: ProjectStore;
 }
 
 export async function sessionRoutes(
   app: FastifyInstance,
-  { sessions, clis }: SessionRoutesOptions,
+  { sessions, clis, projects }: SessionRoutesOptions,
 ) {
   app.get('/api/sessions', async () => sessions.list());
 
   app.post('/api/sessions', async (request, reply) => {
     const parsed = createSessionSchema.safeParse(request.body);
     if (!parsed.success) return reply.code(400).send({ error: 'invalid body' });
-    const { cliId, cwd, cols, rows } = parsed.data;
+    const { cliId, projectId, cols, rows } = parsed.data;
+
+    let cwd = parsed.data.cwd ?? os.homedir();
+    if (projectId !== undefined) {
+      const project = projects.get(projectId);
+      if (!project) return reply.code(400).send({ error: 'Project tidak ditemukan' });
+      cwd = project.path;
+    }
 
     if (!fs.statSync(cwd, { throwIfNoEntry: false })?.isDirectory()) {
       return reply.code(400).send({ error: 'cwd is not a directory' });
@@ -55,7 +63,7 @@ export async function sessionRoutes(
       cwd,
       cols,
       rows,
-      projectId: null,
+      projectId: projectId ?? null,
       cliId: cliId ?? null,
       title,
     });

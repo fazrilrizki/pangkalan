@@ -1,59 +1,62 @@
-import { useEffect, useState } from 'react';
-import type { CliInfo, SessionInfo } from '@integrasi/shared';
+import { useEffect } from 'react';
+import { Sidebar } from './components/Sidebar';
 import { TerminalPane } from './components/TerminalPane';
-import { ApiError, apiFetch } from './lib/api';
+import { ApiError } from './lib/api';
+import { useAppStore } from './stores/app-store';
 
 export function App() {
-  const [session, setSession] = useState<SessionInfo | null>(null);
-  const [clis, setClis] = useState<CliInfo[]>([]);
-  const [cliId, setCliId] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const loaded = useAppStore((s) => s.loaded);
+  const error = useAppStore((s) => s.error);
+  const order = useAppStore((s) => s.order);
+  const activeId = useAppStore((s) => s.activeId);
+  const { load, setError, applyServerMessage, setConnection } = useAppStore.getState();
 
   useEffect(() => {
-    const onError = (err: unknown) =>
-      setError(err instanceof ApiError && err.status === 401 ? 'Token tidak valid' : String(err));
-    apiFetch<SessionInfo[]>('/api/sessions')
-      .then((sessions) => setSession(sessions[0] ?? null))
-      .catch(onError);
-    apiFetch<{ clis: CliInfo[] }>('/api/clis')
-      .then(({ clis }) => setClis(clis))
-      .catch(onError);
-  }, []);
-
-  async function createSession() {
-    const body = cliId ? { cliId } : {};
-    setSession(
-      await apiFetch<SessionInfo>('/api/sessions', { method: 'POST', body: JSON.stringify(body) }),
+    load().catch((err: unknown) =>
+      setError(
+        err instanceof ApiError && err.status === 401
+          ? 'Token tidak valid. Buka URL bertoken yang dicetak server di console.'
+          : `Gagal memuat: ${String(err)}`,
+      ),
     );
-  }
+  }, [load, setError]);
 
   return (
-    <main className="flex h-full flex-col font-sans">
-      <header className="flex items-center gap-3 border-b border-white/10 px-4 py-2">
-        <span className="font-semibold">Integrasi AI</span>
-        <select
-          className="rounded bg-white/10 px-2 py-1 text-sm"
-          value={cliId}
-          onChange={(e) => setCliId(e.target.value)}
-        >
-          <option value="">Shell</option>
-          {clis.map((cli) => (
-            <option key={cli.id} value={cli.id} disabled={!cli.enabled}>
-              {cli.name}
-            </option>
+    <div className="flex h-full">
+      <Sidebar />
+      <main className="flex min-w-0 flex-1 flex-col">
+        {error && (
+          <div
+            role="alert"
+            className="flex items-center justify-between border-b border-error/30 bg-error/10 px-4 py-2 text-sm text-error"
+          >
+            {error}
+            <button className="icon-btn" aria-label="Tutup pesan" onClick={() => setError(null)}>
+              ×
+            </button>
+          </div>
+        )}
+        <section className="relative min-h-0 flex-1 bg-[#0d1017] p-2">
+          {order.map((id) => (
+            <TerminalPane
+              key={id}
+              sessionId={id}
+              active={id === activeId}
+              onServerMessage={(message) => applyServerMessage(id, message)}
+              onConnectionChange={(state) => setConnection(id, state)}
+            />
           ))}
-        </select>
-        <button
-          className="rounded bg-white/10 px-3 py-1 text-sm hover:bg-white/20"
-          onClick={() => void createSession().catch((err: unknown) => setError(String(err)))}
-        >
-          Sesi baru
-        </button>
-        {error && <span className="text-sm text-red-400">{error}</span>}
-      </header>
-      <section className="min-h-0 flex-1 p-2">
-        {session && <TerminalPane key={session.id} sessionId={session.id} active />}
-      </section>
-    </main>
+          {loaded && order.length === 0 && (
+            <div className="grid h-full place-items-center text-center text-sm text-muted">
+              <p>
+                Pilih project di sidebar, lalu pilih CLI
+                <br />
+                untuk membuka sesi terminal.
+              </p>
+            </div>
+          )}
+        </section>
+      </main>
+    </div>
   );
 }
