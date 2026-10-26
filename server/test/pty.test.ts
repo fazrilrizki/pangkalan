@@ -39,4 +39,20 @@ describe('spawnPty', () => {
     await waitFor(() => exitCode !== undefined);
     expect(typeof exitCode).toBe('number');
   });
+
+  it('ignores writes and resizes after the process has exited', async () => {
+    const proc = spawnPty({
+      file: 'powershell.exe',
+      args: ['-NoLogo', '-NoProfile', '-Command', 'exit 0'],
+      cwd: process.cwd(),
+      cols: 80,
+      rows: 24,
+    });
+    let exited = false;
+    proc.onExit(() => (exited = true));
+    await waitFor(() => exited);
+    expect(() => proc.resize(100, 30)).not.toThrow();
+    expect(() => proc.write('late')).not.toThrow();
+    expect(() => proc.kill()).not.toThrow();
+  });
 });

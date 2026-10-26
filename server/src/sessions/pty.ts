@@ -19,6 +19,14 @@ export interface SpawnPtyOptions {
 }
 
 /** Thin seam over the PTY package so it can be swapped without touching callers. */
+function ignoreExited(action: () => void) {
+  try {
+    action();
+  } catch {
+    // process already gone
+  }
+}
+
 export function spawnPty({
   file,
   args,
@@ -39,9 +47,11 @@ export function spawnPty({
     get pid() {
       return proc.pid;
     },
-    write: (data) => proc.write(data),
-    resize: (c, r) => proc.resize(c, r),
-    kill: () => proc.kill(),
+    // The process can die before node-pty emits exit; writing or resizing in that window throws.
+    // The exit event follows shortly, so these calls are safe to drop.
+    write: (data) => ignoreExited(() => proc.write(data)),
+    resize: (c, r) => ignoreExited(() => proc.resize(c, r)),
+    kill: () => ignoreExited(() => proc.kill()),
     onData: (listener) => {
       proc.onData(listener);
     },

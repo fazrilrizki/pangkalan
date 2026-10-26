@@ -113,8 +113,13 @@ export async function sessionRoutes(
         const parsed = clientMessageSchema.safeParse(json);
         if (!parsed.success) return;
         const message = parsed.data;
-        if (message.type === 'input') session.write(message.data);
-        else session.resize(message.cols, message.rows);
+        try {
+          if (message.type === 'input') session.write(message.data);
+          else session.resize(message.cols, message.rows);
+        } catch (err) {
+          // One misbehaving session must never take the server (and every other session) down.
+          request.log.warn({ err, sessionId: session.id }, 'terminal message failed');
+        }
       });
 
       socket.on('close', detach);

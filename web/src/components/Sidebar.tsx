@@ -133,7 +133,8 @@ function ProjectItem({ project }: { project: Project }) {
   const sessions = useAppStore((s) => s.sessions);
   const order = useAppStore((s) => s.order);
   const activeId = useAppStore((s) => s.activeId);
-  const { updateProject, removeProject, openSession, setActive, setError } = useAppStore.getState();
+  const { updateProject, removeProject, openSession, setActive, setError, reloadClis } =
+    useAppStore.getState();
   const [expanded, setExpanded] = useState(false);
   const [renaming, setRenaming] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -156,7 +157,11 @@ function ProjectItem({ project }: { project: Project }) {
         <button
           className="flex min-w-0 flex-1 items-center gap-2 px-2 py-2 text-left"
           aria-expanded={expanded}
-          onClick={() => setExpanded((v) => !v)}
+          onClick={() => {
+            // Pick up edits to data/clis.json without a page reload.
+            if (!expanded) void reloadClis().catch(() => {});
+            setExpanded((v) => !v);
+          }}
           title={project.path}
         >
           <Icon
