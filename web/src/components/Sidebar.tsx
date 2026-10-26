@@ -6,6 +6,7 @@ import type { SessionView } from '../stores/app-store';
 import { useAppStore } from '../stores/app-store';
 import { ConfirmDialog } from './ConfirmDialog';
 import { Icon } from './Icon';
+import { NotifyToggle } from './NotifyToggle';
 import { StatusDot } from './StatusDot';
 
 const errorMessage = (err: unknown) => (err instanceof ApiError ? err.message : String(err));
@@ -30,14 +31,17 @@ export function Sidebar() {
           </span>
           <span className="font-semibold tracking-tight">Integrasi AI</span>
         </div>
-        <button
-          className="icon-btn"
-          aria-label="Tambah project"
-          title="Tambah project"
-          onClick={() => setAdding((v) => !v)}
-        >
-          <Icon name={adding ? 'x' : 'plus'} />
-        </button>
+        <div className="flex items-center gap-0.5">
+          <NotifyToggle />
+          <button
+            className="icon-btn"
+            aria-label="Tambah project"
+            title="Tambah project"
+            onClick={() => setAdding((v) => !v)}
+          >
+            <Icon name={adding ? 'x' : 'plus'} />
+          </button>
+        </div>
       </div>
 
       {adding && <AddProjectForm onDone={() => setAdding(false)} />}
