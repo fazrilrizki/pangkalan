@@ -1,11 +1,15 @@
 import fs from 'node:fs';
+import os from 'node:os';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { WS_CLOSE_SESSION_NOT_FOUND, clientMessageSchema } from '@integrasi/shared';
 import type { SessionManager } from '../sessions/session-manager';
 
 const createSessionSchema = z.object({
-  cwd: z.string().min(1),
+  cwd: z
+    .string()
+    .min(1)
+    .default(() => os.homedir()),
   cols: z.number().int().min(2).max(1000).optional(),
   rows: z.number().int().min(2).max(500).optional(),
 });
