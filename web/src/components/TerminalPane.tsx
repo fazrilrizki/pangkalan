@@ -117,7 +117,7 @@ export function TerminalPane({
   return (
     <div
       ref={containerRef}
-      className="h-full w-full"
+      className="isolate h-full w-full"
       style={{ display: active ? 'block' : 'none' }}
       data-testid={`terminal-${sessionId}`}
     />

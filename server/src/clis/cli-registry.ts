@@ -103,5 +103,6 @@ export function cliLaunchArgs(shell: ShellConfig, cli: CliConfig): string[] {
   const commandLine = ['&', quotePowerShell(cli.command), ...cli.args.map(quotePowerShell)].join(
     ' ',
   );
-  return [...shell.args, '-Command', commandLine];
+  // Without the explicit exit, PowerShell collapses any CLI failure to exit code 1.
+  return [...shell.args, '-Command', `${commandLine}; exit $LASTEXITCODE`];
 }

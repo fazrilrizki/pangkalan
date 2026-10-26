@@ -36,7 +36,9 @@ export function spawnPty({
   });
 
   return {
-    pid: proc.pid,
+    get pid() {
+      return proc.pid;
+    },
     write: (data) => proc.write(data),
     resize: (c, r) => proc.resize(c, r),
     kill: () => proc.kill(),

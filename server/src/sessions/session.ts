@@ -1,8 +1,18 @@
+import { spawnSync } from 'node:child_process';
 import type { ServerMessage, SessionInfo, SessionStatus } from '@integrasi/shared';
 import type { PtyProcess } from './pty';
 import { RingBuffer } from './ring-buffer';
 
 export type SessionListener = (message: ServerMessage) => void;
+
+/**
+ * Closing the PTY only ends the shell; a CLI started from it (and its own children) can be
+ * left running. taskkill /T takes the whole tree down on Windows.
+ */
+function killProcessTree(pid: number) {
+  if (process.platform !== 'win32') return;
+  spawnSync('taskkill', ['/PID', String(pid), '/T', '/F'], { windowsHide: true, stdio: 'ignore' });
+}
 
 export interface SessionMeta {
   id: string;
@@ -87,6 +97,7 @@ export class Session {
   kill() {
     if (!this.isRunning) return;
     this.killRequested = true;
+    killProcessTree(this.pty.pid);
     this.pty.kill();
   }
 

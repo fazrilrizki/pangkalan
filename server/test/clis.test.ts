@@ -84,7 +84,7 @@ describe('cliLaunchArgs', () => {
     expect(args).toEqual([
       '-NoLogo',
       '-Command',
-      "& 'C:\\Program Files\\it''s\\x.exe' '--flag' 'a b'",
+      "& 'C:\\Program Files\\it''s\\x.exe' '--flag' 'a b'; exit $LASTEXITCODE",
     ]);
   });
 });

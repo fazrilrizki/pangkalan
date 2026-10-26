@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { ExitBanner } from './components/ExitBanner';
 import { Sidebar } from './components/Sidebar';
 import { TabBar } from './components/TabBar';
 import { TerminalPane } from './components/TerminalPane';
@@ -10,6 +11,7 @@ export function App() {
   const error = useAppStore((s) => s.error);
   const order = useAppStore((s) => s.order);
   const activeId = useAppStore((s) => s.activeId);
+  const active = useAppStore((s) => (s.activeId ? s.sessions[s.activeId] : undefined));
   const { load, setError, applyServerMessage, setConnection } = useAppStore.getState();
 
   useEffect(() => {
@@ -48,6 +50,7 @@ export function App() {
               onConnectionChange={(state) => setConnection(id, state)}
             />
           ))}
+          {active && active.exitCode !== null && <ExitBanner key={active.id} session={active} />}
           {loaded && order.length === 0 && (
             <div className="grid h-full place-items-center text-center text-sm text-muted">
               <p>
