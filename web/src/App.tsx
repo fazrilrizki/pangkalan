@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react';
+import { ApiError, apiFetch } from './lib/api';
 
 export function App() {
-  const [status, setStatus] = useState<'checking' | 'ok' | 'down'>('checking');
+  const [status, setStatus] = useState<'checking' | 'ok' | 'unauthorized' | 'down'>('checking');
 
   useEffect(() => {
-    fetch('/api/health')
-      .then((res) => setStatus(res.ok ? 'ok' : 'down'))
-      .catch(() => setStatus('down'));
+    apiFetch('/api/health')
+      .then(() => setStatus('ok'))
+      .catch((err: unknown) =>
+        setStatus(err instanceof ApiError && err.status === 401 ? 'unauthorized' : 'down'),
+      );
   }, []);
 
   return (

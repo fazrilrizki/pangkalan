@@ -1,11 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { buildApp } from '../src/app';
-import { loadConfig } from '../src/config';
+import { authHeaders, buildTestApp } from './helpers';
 
 describe('GET /api/health', () => {
   it('returns ok', async () => {
-    const app = await buildApp({ config: loadConfig({ NODE_ENV: 'test' }) });
-    const res = await app.inject({ method: 'GET', url: '/api/health' });
+    const app = await buildTestApp();
+    const res = await app.inject({ method: 'GET', url: '/api/health', headers: authHeaders });
     expect(res.statusCode).toBe(200);
     expect(res.json()).toEqual({ ok: true });
     await app.close();
