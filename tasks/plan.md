@@ -55,47 +55,47 @@ Paralel aman (jika ada >1 sesi kerja): T2 ‖ T3; T6 ‖ T7; T11 ‖ T12.
 
 ### Phase 1: Foundation
 
-- [ ] T1: Scaffold monorepo + tooling
-- [ ] T2: Spike node-pty di Windows/Node 24 (risiko tertinggi, fail fast)
-- [ ] T3: Security layer (bind, token, Origin/Host check)
+- [x] T1: Scaffold monorepo + tooling
+- [x] T2: Spike node-pty di Windows/Node 24 (risiko tertinggi, fail fast)
+- [x] T3: Security layer (bind, token, Origin/Host check)
 
 ### Checkpoint A: Foundation
 
-- [ ] `npm test`, `npm run typecheck`, `npm run lint` hijau
-- [ ] Paket PTY terpilih & terbukti spawn PowerShell
-- [ ] Request tanpa token / Origin asing ditolak (test)
+- [x] `npm test`, `npm run typecheck`, `npm run lint` hijau
+- [x] Paket PTY terpilih & terbukti spawn PowerShell
+- [x] Request tanpa token / Origin asing ditolak (test)
 
 ### Phase 2: Core flow
 
-- [ ] T4: Session backend (SessionManager, RingBuffer, REST + WS)
-- [ ] T5: Terminal UI satu sesi (xterm.js)
-- [ ] T6: CLI registry via `data/clis.json`
-- [ ] T7: Project store + sidebar
-- [ ] T8: Multi-tab + pemulihan sesi setelah refresh
-- [ ] T9: Kill sesi, tutup tab, penanganan exit
+- [x] T4: Session backend (SessionManager, RingBuffer, REST + WS)
+- [x] T5: Terminal UI satu sesi (xterm.js)
+- [x] T6: CLI registry via `data/clis.json`
+- [x] T7: Project store + sidebar
+- [x] T8: Multi-tab + pemulihan sesi setelah refresh
+- [x] T9: Kill sesi, tutup tab, penanganan exit
 
 ### Checkpoint B: Core flow
 
-- [ ] Tambah project → pilih Claude Code → `claude` interaktif di folder itu
-- [ ] ≥ 2 tab paralel, refresh → pulih dengan scrollback
+- [x] Tambah project → pilih Claude Code → `claude` interaktif di folder itu
+- [x] ≥ 2 tab paralel, refresh → pulih dengan scrollback
 - [ ] Review dengan pemilik sebelum lanjut
 
 ### Phase 3: Status & notifikasi
 
-- [ ] T10: Status heuristik + animasi StatusDot
-- [ ] T11: Claude Code hooks → status akurat
-- [ ] T12: Notifikasi browser saat `waiting`
+- [x] T10: Status heuristik + animasi StatusDot
+- [x] T11: Claude Code hooks → status akurat
+- [x] T12: Notifikasi browser saat `waiting`
 
 ### Checkpoint C: Status
 
 - [ ] Claude minta approval → `waiting` ≤ 1 dtk + notifikasi
-- [ ] Fake CLI `(y/n)` → `waiting` via heuristik
+- [x] Fake CLI `(y/n)` → `waiting` via heuristik
 
 ### Phase 4: Polish & verifikasi
 
-- [ ] T13: Polish UI (tema, warna per-CLI, motion, reduced-motion, shortcut)
-- [ ] T14: E2E Playwright + sapu Success Criteria spec
-- [ ] T15: README + finalisasi preset Antigravity
+- [x] T13: Polish UI (tema, warna per-CLI, motion, reduced-motion, shortcut)
+- [x] T14: E2E Playwright + sapu Success Criteria spec
+- [x] T15: README + finalisasi preset Antigravity
 
 ### Checkpoint D: Complete
 
@@ -122,3 +122,7 @@ Paralel aman (jika ada >1 sesi kerja): T2 ‖ T3; T6 ‖ T7; T11 ‖ T12.
 ## Catatan Implementasi
 
 - **T2 (2026-10-26):** Paket PTY = `@lydell/node-pty@1.2.0-beta.18` (prebuilt `win32-x64`, tanpa VS Build Tools). Terbukti spawn `powershell.exe`, echo, resize, kill di Node v24.0.1. Kill via ConPTY memberi exit code `-1073741510` (`STATUS_CONTROL_C_EXIT`) → kill yang diminta user dianggap `exited`, bukan `error`.
+- **T11:** Injeksi hooks memakai `claude --settings <file>` dengan handler `type: "http"` (dok. resmi: list hooks digabung lintas sumber, `--settings` di atas user/project). Belum diuji dengan Claude asli; lihat `tasks/verification.md`.
+- **T13:** Shortcut diganti ke `Ctrl+Alt+…` karena `Ctrl+Shift+T/W` dan `Ctrl+Tab` dicadangkan Chrome (SPEC.md diperbarui).
+- **T14:** E2E memakai Chrome terpasang (`channel: 'chrome'`), tanpa mengunduh browser Playwright. Menemukan crash server saat resize PTY yang baru exit, sudah diperbaiki.
+- **T15:** Preset Antigravity tetap `enabled: false` sampai command-nya diketahui.

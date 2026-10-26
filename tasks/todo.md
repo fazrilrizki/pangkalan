@@ -15,15 +15,15 @@ Perintah standar verifikasi: `npm test` · `npm run typecheck` · `npm run lint`
 
 **Acceptance criteria:**
 
-- [ ] `npm run dev` menjalankan server (127.0.0.1:4317) dan Vite bersamaan; `GET /api/health` → `{ok:true}`
-- [ ] Web memanggil `/api/health` lewat proxy Vite dan menampilkan status
-- [ ] Semua script di Commands spec ada dan berjalan
+- [x] `npm run dev` menjalankan server (127.0.0.1:4317) dan Vite bersamaan; `GET /api/health` → `{ok:true}`
+- [x] Web memanggil `/api/health` lewat proxy Vite dan menampilkan status
+- [x] Semua script di Commands spec ada dan berjalan
 
 **Verification:**
 
-- [ ] `npm test` (1 test health via Fastify inject) hijau
-- [ ] `npm run typecheck && npm run lint && npm run build` hijau
-- [ ] Manual: buka http://127.0.0.1:5173, lihat "server ok"
+- [x] `npm test` (1 test health via Fastify inject) hijau
+- [x] `npm run typecheck && npm run lint && npm run build` hijau
+- [x] Manual: buka http://127.0.0.1:5173, lihat "server ok"
 
 **Dependencies:** None
 **Files likely touched:** `package.json`, `tsconfig.base.json`, `server/src/index.ts`, `web/src/App.tsx`, `.gitignore` (+ config tool)
@@ -37,14 +37,14 @@ Perintah standar verifikasi: `npm test` · `npm run typecheck` · `npm run lint`
 
 **Acceptance criteria:**
 
-- [ ] Satu paket PTY terpasang tanpa error di mesin ini
-- [ ] Spawn `powershell.exe` → tulis `echo hello` → output berisi `hello`; resize tidak error; kill → event exit
-- [ ] Bila kedua paket gagal: STOP, laporkan error persis, tanya pemilik
+- [x] Satu paket PTY terpasang tanpa error di mesin ini
+- [x] Spawn `powershell.exe` → tulis `echo hello` → output berisi `hello`; resize tidak error; kill → event exit
+- [x] Bila kedua paket gagal: STOP, laporkan error persis, tanya pemilik
 
 **Verification:**
 
-- [ ] `npm test -w server -- pty` (integration test nyata) hijau
-- [ ] Keputusan paket tercatat di plan
+- [x] `npm test -w server -- pty` (integration test nyata) hijau
+- [x] Keputusan paket tercatat di plan
 
 **Dependencies:** T1
 **Files likely touched:** `server/package.json`, `server/src/sessions/pty.ts`, `server/test/pty.test.ts`
@@ -58,14 +58,14 @@ Perintah standar verifikasi: `npm test` · `npm run typecheck` · `npm run lint`
 
 **Acceptance criteria:**
 
-- [ ] Request tanpa/salah token → 401; Origin asing → 403; Host asing → 403
-- [ ] `/api/health` tetap butuh token (tidak ada endpoint terbuka selain asset statis)
-- [ ] Web dengan token valid tetap bisa memanggil API
+- [x] Request tanpa/salah token → 401; Origin asing → 403; Host asing → 403
+- [x] `/api/health` tetap butuh token (tidak ada endpoint terbuka selain asset statis)
+- [x] Web dengan token valid tetap bisa memanggil API
 
 **Verification:**
 
-- [ ] `npm test -w server -- security` (≥ 6 kasus: ok, no token, bad token, bad origin, bad host, WS tanpa token) hijau
-- [ ] Manual: `curl http://127.0.0.1:4317/api/health` → 401
+- [x] `npm test -w server -- security` (≥ 6 kasus: ok, no token, bad token, bad origin, bad host, WS tanpa token) hijau
+- [x] Manual: `curl http://127.0.0.1:4317/api/health` → 401
 
 **Dependencies:** T1
 **Files likely touched:** `server/src/security/auth.ts`, `server/src/index.ts`, `server/test/security.test.ts`, `web/src/lib/api.ts`
@@ -75,9 +75,9 @@ Perintah standar verifikasi: `npm test` · `npm run typecheck` · `npm run lint`
 
 ### Checkpoint A: Foundation
 
-- [ ] `npm test`, `npm run typecheck`, `npm run lint` hijau
-- [ ] Paket PTY terpilih & terbukti
-- [ ] Security test hijau
+- [x] `npm test`, `npm run typecheck`, `npm run lint` hijau
+- [x] Paket PTY terpilih & terbukti
+- [x] Security test hijau
 
 ---
 
@@ -89,14 +89,14 @@ Perintah standar verifikasi: `npm test` · `npm run typecheck` · `npm run lint`
 
 **Acceptance criteria:**
 
-- [ ] Buat sesi → WS input `echo hi\r` → terima output `hi`
-- [ ] Putus WS → sambung lagi → `replay` berisi output sebelumnya, input jalan lagi
-- [ ] Dua klien attach sesi yang sama → keduanya terima output; payload invalid ditolak Zod
+- [x] Buat sesi → WS input `echo hi\r` → terima output `hi`
+- [x] Putus WS → sambung lagi → `replay` berisi output sebelumnya, input jalan lagi
+- [x] Dua klien attach sesi yang sama → keduanya terima output; payload invalid ditolak Zod
 
 **Verification:**
 
-- [ ] `npm test -w server -- sessions` (unit RingBuffer + integration WS nyata) hijau
-- [ ] `npm run typecheck` hijau
+- [x] `npm test -w server -- sessions` (unit RingBuffer + integration WS nyata) hijau
+- [x] `npm run typecheck` hijau
 
 **Dependencies:** T2, T3
 **Files likely touched:** `server/src/sessions/ring-buffer.ts`, `server/src/sessions/session-manager.ts`, `server/src/routes/sessions.ts`, `shared/src/protocol.ts`, `server/test/sessions.test.ts`
@@ -110,15 +110,15 @@ Perintah standar verifikasi: `npm test` · `npm run typecheck` · `npm run lint`
 
 **Acceptance criteria:**
 
-- [ ] PowerShell interaktif penuh di browser: warna, Ctrl+C, resize jendela mengikuti
-- [ ] Refresh halaman → terminal sama muncul dengan scrollback (id sesi disimpan sementara di URL/sessionStorage)
-- [ ] Manual: jalankan `claude` di terminal ini → UI Claude tampil & bisa dipakai
+- [x] PowerShell interaktif penuh di browser: warna, Ctrl+C, resize jendela mengikuti
+- [x] Refresh halaman → terminal sama muncul dengan scrollback (id sesi disimpan sementara di URL/sessionStorage)
+- [x] Manual: jalankan `claude` di terminal ini → UI Claude tampil & bisa dipakai
 
 **Verification:**
 
-- [ ] `npm test -w web` (unit WS client: reconnect & parsing pesan) hijau
-- [ ] `npm run build` hijau
-- [ ] Manual check tiga poin di atas
+- [x] `npm test -w web` (unit WS client: reconnect & parsing pesan) hijau
+- [x] `npm run build` hijau
+- [x] Manual check tiga poin di atas
 
 **Dependencies:** T4
 **Files likely touched:** `web/src/components/TerminalPane.tsx`, `web/src/lib/ws-client.ts`, `web/src/App.tsx`, `web/test/ws-client.test.ts`
@@ -132,14 +132,14 @@ Perintah standar verifikasi: `npm test` · `npm run typecheck` · `npm run lint`
 
 **Acceptance criteria:**
 
-- [ ] Preset Claude Code (enabled) & Antigravity (`enabled:false`, command placeholder) tersedia
-- [ ] Ubah `data/clis.json` → `GET /api/clis` berubah tanpa restart; entri rusak tidak menjatuhkan entri lain
-- [ ] `cliId` tak dikenal/disabled → 400; command tidak pernah diterima dari payload
+- [x] Preset Claude Code (enabled) & Antigravity (`enabled:false`, command placeholder) tersedia
+- [x] Ubah `data/clis.json` → `GET /api/clis` berubah tanpa restart; entri rusak tidak menjatuhkan entri lain
+- [x] `cliId` tak dikenal/disabled → 400; command tidak pernah diterima dari payload
 
 **Verification:**
 
-- [ ] `npm test -w server -- clis` (schema, reload, invalid entry, unknown cliId) hijau
-- [ ] Manual: pilih Claude Code → `claude` jalan
+- [x] `npm test -w server -- clis` (schema, reload, invalid entry, unknown cliId) hijau
+- [x] Manual: pilih Claude Code → `claude` jalan
 
 **Dependencies:** T5
 **Files likely touched:** `shared/src/cli-schema.ts`, `server/src/clis/cli-registry.ts`, `server/src/routes/clis.ts`, `data/clis.example.json`, `server/test/clis.test.ts`
@@ -153,14 +153,14 @@ Perintah standar verifikasi: `npm test` · `npm run typecheck` · `npm run lint`
 
 **Acceptance criteria:**
 
-- [ ] Tambah project path valid → muncul di sidebar & bertahan setelah restart server; path tidak ada → error jelas di UI
-- [ ] Rename/favorit/hapus bekerja; hapus tidak menyentuh folder di disk
-- [ ] Klik project → pilih Claude → `claude` jalan dengan cwd folder project (cek via `/status` atau `pwd`)
+- [x] Tambah project path valid → muncul di sidebar & bertahan setelah restart server; path tidak ada → error jelas di UI
+- [x] Rename/favorit/hapus bekerja; hapus tidak menyentuh folder di disk
+- [x] Klik project → pilih Claude → `claude` jalan dengan cwd folder project (cek via `/status` atau `pwd`)
 
 **Verification:**
 
-- [ ] `npm test -w server -- projects` (CRUD, path invalid, persist) hijau
-- [ ] Manual: alur tiga poin di atas
+- [x] `npm test -w server -- projects` (CRUD, path invalid, persist) hijau
+- [x] Manual: alur tiga poin di atas
 
 **Dependencies:** T5 (bisa paralel dengan T6; integrasi `cliId` setelah T6)
 **Files likely touched:** `server/src/projects/project-store.ts`, `server/src/routes/projects.ts`, `web/src/components/Sidebar.tsx`, `web/src/stores/app-store.ts`, `server/test/projects.test.ts`
@@ -174,14 +174,14 @@ Perintah standar verifikasi: `npm test` · `npm run typecheck` · `npm run lint`
 
 **Acceptance criteria:**
 
-- [ ] ≥ 5 sesi paralel, output tidak tercampur, pindah tab tidak mengganggu sesi lain
-- [ ] Tutup browser lalu buka lagi → semua tab pulih dengan scrollback, input jalan < 1 dtk
-- [ ] Tab menampilkan nama project + ikon/warna CLI
+- [x] ≥ 5 sesi paralel, output tidak tercampur, pindah tab tidak mengganggu sesi lain
+- [x] Tutup browser lalu buka lagi → semua tab pulih dengan scrollback, input jalan < 1 dtk
+- [x] Tab menampilkan nama project + ikon/warna CLI
 
 **Verification:**
 
-- [ ] `npm test -w web` (store: add/remove/restore tab) hijau
-- [ ] Manual: 5 sesi, refresh, cek tiap tab
+- [x] `npm test -w web` (store: add/remove/restore tab) hijau
+- [x] Manual: 5 sesi, refresh, cek tiap tab
 
 **Dependencies:** T6, T7
 **Files likely touched:** `web/src/components/TabBar.tsx`, `web/src/stores/app-store.ts`, `web/src/App.tsx`, `web/test/app-store.test.ts`
@@ -195,14 +195,14 @@ Perintah standar verifikasi: `npm test` · `npm run typecheck` · `npm run lint`
 
 **Acceptance criteria:**
 
-- [ ] Kill menghentikan CLI anak (tidak ada proses `claude` yatim — cek Task Manager / `Get-Process`)
-- [ ] CLI keluar sendiri → tab merah/abu + kode exit tampil; "Jalankan ulang" membuat sesi baru di project & CLI yang sama
-- [ ] Batal di dialog → sesi tetap hidup
+- [x] Kill menghentikan CLI anak (tidak ada proses `claude` yatim — cek Task Manager / `Get-Process`)
+- [x] CLI keluar sendiri → tab merah/abu + kode exit tampil; "Jalankan ulang" membuat sesi baru di project & CLI yang sama
+- [x] Batal di dialog → sesi tetap hidup
 
 **Verification:**
 
-- [ ] `npm test -w server -- sessions` (kill, exit event, cleanup) hijau
-- [ ] Manual: kill sesi Claude, cek proses
+- [x] `npm test -w server -- sessions` (kill, exit event, cleanup) hijau
+- [x] Manual: kill sesi Claude, cek proses
 
 **Dependencies:** T8
 **Files likely touched:** `server/src/sessions/session-manager.ts`, `web/src/components/ConfirmDialog.tsx`, `web/src/components/TabBar.tsx`, `server/test/sessions.test.ts`
@@ -212,8 +212,8 @@ Perintah standar verifikasi: `npm test` · `npm run typecheck` · `npm run lint`
 
 ### Checkpoint B: Core flow
 
-- [ ] Semua test, typecheck, lint, build hijau
-- [ ] Alur utama: tambah project → Claude Code → kerja → refresh → pulih
+- [x] Semua test, typecheck, lint, build hijau
+- [x] Alur utama: tambah project → Claude Code → kerja → refresh → pulih
 - [ ] Review dengan pemilik sebelum Phase 3
 
 ---
@@ -226,14 +226,14 @@ Perintah standar verifikasi: `npm test` · `npm run typecheck` · `npm run lint`
 
 **Acceptance criteria:**
 
-- [ ] Fake CLI yang mencetak terus → `working`; diam → `idle`; mencetak `(y/n)` lalu diam → `waiting`
-- [ ] Status konsisten antara tab dan sidebar, dan setelah refresh
-- [ ] Event status hanya dikirim saat berubah (tidak spam)
+- [x] Fake CLI yang mencetak terus → `working`; diam → `idle`; mencetak `(y/n)` lalu diam → `waiting`
+- [x] Status konsisten antara tab dan sidebar, dan setelah refresh
+- [x] Event status hanya dikirim saat berubah (tidak spam)
 
 **Verification:**
 
-- [ ] `npm test -w server -- status` (unit detector + integration fake CLI) hijau
-- [ ] Manual: lihat animasi tiap status
+- [x] `npm test -w server -- status` (unit detector + integration fake CLI) hijau
+- [x] Manual: lihat animasi tiap status
 
 **Dependencies:** T9
 **Files likely touched:** `server/src/sessions/status-detector.ts`, `server/src/sessions/session-manager.ts`, `web/src/components/StatusDot.tsx`, `server/test/status.test.ts`, `server/test/fixtures/fake-cli.mjs`
@@ -248,13 +248,13 @@ Perintah standar verifikasi: `npm test` · `npm run typecheck` · `npm run lint`
 **Acceptance criteria:**
 
 - [ ] Claude minta approval → status `waiting` ≤ 1 dtk; selesai menjawab → `idle`; submit prompt → `working`
-- [ ] Secret salah / sesi tak dikenal → 401/404; file settings sementara dihapus saat sesi berakhir
-- [ ] Settings user sendiri (`~/.claude/settings.json`) tidak diubah
-- [ ] Bila injeksi tidak didukung: STOP, laporkan, fallback heuristik
+- [x] Secret salah / sesi tak dikenal → 401/404; file settings sementara dihapus saat sesi berakhir
+- [x] Settings user sendiri (`~/.claude/settings.json`) tidak diubah
+- [x] Bila injeksi tidak didukung: STOP, laporkan, fallback heuristik
 
 **Verification:**
 
-- [ ] `npm test -w server -- hooks` (endpoint + override) hijau
+- [x] `npm test -w server -- hooks` (endpoint + override) hijau
 - [ ] Manual dengan `claude` asli: minta edit file → lihat glow kuning
 
 **Dependencies:** T10
@@ -269,14 +269,14 @@ Perintah standar verifikasi: `npm test` · `npm run typecheck` · `npm run lint`
 
 **Acceptance criteria:**
 
-- [ ] Notifikasi muncul hanya untuk sesi yang tidak sedang dilihat
-- [ ] Klik notifikasi → window fokus & tab sesi aktif
-- [ ] Izin ditolak / localStorage gagal → app tetap jalan tanpa error
+- [x] Notifikasi muncul hanya untuk sesi yang tidak sedang dilihat
+- [x] Klik notifikasi → window fokus & tab sesi aktif
+- [x] Izin ditolak / localStorage gagal → app tetap jalan tanpa error
 
 **Verification:**
 
-- [ ] `npm test -w web -- notify` (logika kapan notifikasi dikirim) hijau
-- [ ] Manual: dua tab, buat yang tidak aktif masuk waiting
+- [x] `npm test -w web -- notify` (logika kapan notifikasi dikirim) hijau
+- [x] Manual: dua tab, buat yang tidak aktif masuk waiting
 
 **Dependencies:** T10 (paralel dengan T11)
 **Files likely touched:** `web/src/lib/notify.ts`, `web/src/components/NotifyToggle.tsx`, `web/test/notify.test.ts`
@@ -286,7 +286,7 @@ Perintah standar verifikasi: `npm test` · `npm run typecheck` · `npm run lint`
 
 ### Checkpoint C: Status
 
-- [ ] Semua test hijau
+- [x] Semua test hijau
 - [ ] Success Criteria #6 spec terbukti dengan Claude asli
 - [ ] Review dengan pemilik
 
@@ -300,13 +300,13 @@ Perintah standar verifikasi: `npm test` · `npm run typecheck` · `npm run lint`
 
 **Acceptance criteria:**
 
-- [ ] Shortcut bekerja; input terminal biasa (Ctrl+C, Ctrl+R, dll) tetap sampai ke CLI
-- [ ] Reduced-motion menonaktifkan animasi berdenyut/berkedip
-- [ ] Semua tombol ikon punya label aksesibel; navigasi keyboard sidebar → tab → terminal
+- [x] Shortcut bekerja; input terminal biasa (Ctrl+C, Ctrl+R, dll) tetap sampai ke CLI
+- [x] Reduced-motion menonaktifkan animasi berdenyut/berkedip
+- [x] Semua tombol ikon punya label aksesibel; navigasi keyboard sidebar → tab → terminal
 
 **Verification:**
 
-- [ ] `npm run build && npm run lint` hijau
+- [x] `npm run build && npm run lint` hijau
 - [ ] Manual: review visual bersama pemilik
 
 **Dependencies:** T12
@@ -321,14 +321,14 @@ Perintah standar verifikasi: `npm test` · `npm run typecheck` · `npm run lint`
 
 **Acceptance criteria:**
 
-- [ ] `npm run test:e2e` hijau di mesin ini
-- [ ] Tiap Success Criteria spec punya bukti (test name atau langkah manual + hasil)
-- [ ] Kegagalan dicatat jujur, tidak di-skip
+- [x] `npm run test:e2e` hijau di mesin ini
+- [x] Tiap Success Criteria spec punya bukti (test name atau langkah manual + hasil)
+- [x] Kegagalan dicatat jujur, tidak di-skip
 
 **Verification:**
 
-- [ ] `npm run test:e2e` hijau
-- [ ] `tasks/verification.md` lengkap
+- [x] `npm run test:e2e` hijau
+- [x] `tasks/verification.md` lengkap
 
 **Dependencies:** T13
 **Files likely touched:** `e2e/main-flow.spec.ts`, `playwright.config.ts`, `tasks/verification.md`
@@ -342,8 +342,8 @@ Perintah standar verifikasi: `npm test` · `npm run typecheck` · `npm run lint`
 
 **Acceptance criteria:**
 
-- [ ] Orang baru bisa menjalankan app dari README saja
-- [ ] Antigravity bisa dipilih & jalan (atau tercatat jelas masih menunggu command)
+- [x] Orang baru bisa menjalankan app dari README saja
+- [x] Antigravity bisa dipilih & jalan (atau tercatat jelas masih menunggu command)
 
 **Verification:**
 
