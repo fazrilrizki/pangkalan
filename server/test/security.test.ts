@@ -3,8 +3,9 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
+import { buildApp } from '../src/app';
 import { loadOrCreateToken } from '../src/security/auth';
-import { APP_ORIGIN, TEST_TOKEN, buildTestApp } from './helpers';
+import { APP_ORIGIN, TEST_TOKEN, buildTestApp, testConfig } from './helpers';
 
 describe('security layer', () => {
   let app: FastifyInstance;
@@ -110,5 +111,26 @@ describe('loadOrCreateToken', () => {
 
   it('prefers INTEGRASI_TOKEN when set', () => {
     expect(loadOrCreateToken(os.tmpdir(), { INTEGRASI_TOKEN: 'from-env' })).toBe('from-env');
+  });
+});
+
+describe('static web app', () => {
+  it('serves the built page without a token but still checks the Host header', async () => {
+    const dist = fs.mkdtempSync(path.join(os.tmpdir(), 'integrasi-dist-'));
+    fs.writeFileSync(path.join(dist, 'index.html'), '<!doctype html><title>ok</title>');
+    const app = await buildApp({
+      config: testConfig({}, { webDistDir: dist }),
+      token: TEST_TOKEN,
+    });
+    const page = await app.inject({ method: 'GET', url: '/', headers: { host: '127.0.0.1:4317' } });
+    expect(page.statusCode).toBe(200);
+    expect(page.body).toContain('<title>ok</title>');
+    const rebound = await app.inject({
+      method: 'GET',
+      url: '/',
+      headers: { host: 'evil.example' },
+    });
+    expect(rebound.statusCode).toBe(403);
+    await app.close();
   });
 });

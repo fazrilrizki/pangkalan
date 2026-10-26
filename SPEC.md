@@ -197,7 +197,7 @@ export function detectStatus(input: {
 - Dark theme default, aksen per-CLI dari `color` config.
 - Layout: sidebar kiri (project + sesi per project), tab bar atas, terminal penuh di area utama.
 - Animasi status: `working` = denyut biru, `waiting` = glow kuning berkedip, `idle` = hijau statis, `exited/error` = merah. Hormati `prefers-reduced-motion` (animasi diganti ikon statis).
-- Shortcut keyboard: `Ctrl+Shift+T` sesi baru, `Ctrl+Tab` / `Ctrl+Shift+Tab` pindah tab, `Ctrl+Shift+W` tutup tab (minta konfirmasi kill).
+- Shortcut keyboard: `Ctrl+Alt+T` sesi baru (project & CLI sama dengan tab aktif), `Ctrl+Alt+]` / `Ctrl+Alt+[` pindah tab, `Ctrl+Alt+1…9` lompat ke tab, `Ctrl+Alt+W` tutup tab (minta konfirmasi kill). _Revisi 2026-10-26: rencana awal `Ctrl+Shift+T/W` dan `Ctrl+Tab` dipakai Chrome sendiri sehingga tidak bisa ditangkap halaman._
 - Terminal mendapat fokus otomatis saat tab aktif; shortcut app tidak boleh menelan input yang dibutuhkan CLI.
 
 ## Security (wajib walau localhost)

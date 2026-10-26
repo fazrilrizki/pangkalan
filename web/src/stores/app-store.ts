@@ -41,6 +41,8 @@ interface AppState {
   /** Tab order. */
   order: string[];
   activeId: string | null;
+  /** Session awaiting the user's confirmation before it is killed. */
+  closingId: string | null;
 
   load(): Promise<void>;
   reloadClis(): Promise<void>;
@@ -49,6 +51,11 @@ interface AppState {
   removeProject(id: string): Promise<void>;
   openSession(projectId: string, cliId: string | null): Promise<void>;
   closeSession(id: string): Promise<void>;
+  /** Closes a finished session right away; asks for confirmation if it is still running. */
+  requestClose(id: string): void;
+  cancelClose(): void;
+  /** Opens another session with the same project and CLI as the active one. */
+  duplicateActive(): Promise<void>;
   setActive(id: string): void;
   cycleActive(step: 1 | -1): void;
   applyServerMessage(id: string, message: ServerMessage): void;
@@ -66,6 +73,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
   sessions: {},
   order: [],
   activeId: null,
+  closingId: null,
 
   async load() {
     const [projects, { clis }, sessions] = await Promise.all([
@@ -141,6 +149,23 @@ export const useAppStore = create<AppState>()((set, get) => ({
       rememberActive(activeId);
       return { order, sessions, activeId };
     });
+  },
+
+  requestClose(id) {
+    const session = get().sessions[id];
+    if (!session) return;
+    if (session.exitCode !== null) void get().closeSession(id);
+    else set({ closingId: id });
+  },
+
+  cancelClose() {
+    set({ closingId: null });
+  },
+
+  async duplicateActive() {
+    const { activeId, sessions, openSession } = get();
+    const active = activeId ? sessions[activeId] : undefined;
+    if (active?.projectId) await openSession(active.projectId, active.cliId);
   },
 
   setActive(id) {

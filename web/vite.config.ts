@@ -6,6 +6,8 @@ const backend = 'http://127.0.0.1:4317';
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  // Served from localhost only, so one ~800 kB bundle (mostly xterm) is fine.
+  build: { chunkSizeWarningLimit: 1000 },
   server: {
     host: '127.0.0.1',
     port: 5173,

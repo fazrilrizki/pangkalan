@@ -1,9 +1,11 @@
-import { useEffect } from 'react';
+import { Fragment, useEffect } from 'react';
 import { ExitBanner } from './components/ExitBanner';
 import { Sidebar } from './components/Sidebar';
 import { TabBar } from './components/TabBar';
 import { TerminalPane } from './components/TerminalPane';
+import { useShortcuts, useWaitingTitle } from './hooks/use-app-chrome';
 import { ApiError } from './lib/api';
+import { SHORTCUT_HELP } from './lib/shortcuts';
 import { useAppStore } from './stores/app-store';
 
 export function App() {
@@ -13,6 +15,8 @@ export function App() {
   const activeId = useAppStore((s) => s.activeId);
   const active = useAppStore((s) => (s.activeId ? s.sessions[s.activeId] : undefined));
   const { load, setError, applyServerMessage, setConnection } = useAppStore.getState();
+  useShortcuts();
+  useWaitingTitle();
 
   useEffect(() => {
     load().catch((err: unknown) =>
@@ -52,12 +56,25 @@ export function App() {
           ))}
           {active && active.exitCode !== null && <ExitBanner key={active.id} session={active} />}
           {loaded && order.length === 0 && (
-            <div className="grid h-full place-items-center text-center text-sm text-muted">
-              <p>
-                Pilih project di sidebar, lalu pilih CLI
-                <br />
-                untuk membuka sesi terminal.
-              </p>
+            <div className="grid h-full place-items-center text-sm text-muted">
+              <div className="max-w-sm text-center">
+                <p className="text-fg">Belum ada sesi terbuka</p>
+                <p className="mt-1">
+                  Klik project di sidebar, lalu pilih CLI untuk membuka terminal di foldernya.
+                </p>
+                <dl className="mt-6 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-left text-xs">
+                  {SHORTCUT_HELP.map(([keys, label]) => (
+                    <Fragment key={keys}>
+                      <dt>
+                        <kbd className="rounded border border-line bg-panel-2 px-1.5 py-0.5 font-mono text-[11px] text-fg">
+                          {keys}
+                        </kbd>
+                      </dt>
+                      <dd>{label}</dd>
+                    </Fragment>
+                  ))}
+                </dl>
+              </div>
             </div>
           )}
         </section>

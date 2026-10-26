@@ -26,7 +26,7 @@ export function Sidebar() {
     <aside className="flex h-full w-72 shrink-0 flex-col border-r border-line bg-panel">
       <div className="flex items-center justify-between px-4 pt-4 pb-2">
         <div className="flex items-center gap-2">
-          <span className="grid size-7 place-items-center rounded-lg bg-gradient-to-br from-accent to-[#c099ff] text-bg">
+          <span className="grid size-7 place-items-center rounded-md bg-accent text-bg">
             <Icon name="terminal" size={15} />
           </span>
           <span className="font-semibold tracking-tight">Integrasi AI</span>

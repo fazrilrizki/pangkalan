@@ -1,4 +1,6 @@
+import fs from 'node:fs';
 import path from 'node:path';
+import fastifyStatic from '@fastify/static';
 import websocket from '@fastify/websocket';
 import Fastify from 'fastify';
 import { CliRegistry } from './clis/cli-registry';
@@ -48,6 +50,11 @@ export async function buildApp({
   await app.register(projectRoutes, { projects });
   await app.register(sessionRoutes, { sessions, clis: registry, projects, port: config.port });
   await app.register(hookRoutes, { sessions });
+
+  // `npm start` serves the built web app; in dev Vite serves it and proxies /api and /ws.
+  if (fs.existsSync(path.join(config.webDistDir, 'index.html'))) {
+    await app.register(fastifyStatic, { root: config.webDistDir });
+  }
 
   app.addHook('onClose', async () => {
     sessions.killAll();

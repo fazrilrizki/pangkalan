@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import type { SessionView } from '../stores/app-store';
 import { useAppStore } from '../stores/app-store';
 import { ConfirmDialog } from './ConfirmDialog';
@@ -9,16 +8,10 @@ export function TabBar() {
   const order = useAppStore((s) => s.order);
   const sessions = useAppStore((s) => s.sessions);
   const activeId = useAppStore((s) => s.activeId);
-  const [closing, setClosing] = useState<SessionView | null>(null);
-  const { setActive, closeSession } = useAppStore.getState();
+  const closing = useAppStore((s) => (s.closingId ? s.sessions[s.closingId] : undefined));
+  const { setActive, closeSession, requestClose, cancelClose } = useAppStore.getState();
 
   if (order.length === 0) return null;
-
-  function requestClose(session: SessionView) {
-    // A finished process has nothing left to kill, so skip the confirmation.
-    if (session.exitCode !== null) void closeSession(session.id);
-    else setClosing(session);
-  }
 
   return (
     <>
@@ -36,21 +29,21 @@ export function TabBar() {
               session={session}
               active={id === activeId}
               onSelect={() => setActive(id)}
-              onClose={() => requestClose(session)}
+              onClose={() => requestClose(session.id)}
             />
           );
         })}
       </div>
       <ConfirmDialog
-        open={closing !== null}
+        open={closing !== undefined}
         title="Tutup sesi?"
         message={`Proses "${closing?.title ?? ''}" akan dihentikan. Pekerjaan yang belum disimpan oleh CLI bisa hilang.`}
         confirmLabel="Hentikan & tutup"
         danger
-        onCancel={() => setClosing(null)}
+        onCancel={cancelClose}
         onConfirm={() => {
+          cancelClose();
           if (closing) void closeSession(closing.id);
-          setClosing(null);
         }}
       />
     </>
