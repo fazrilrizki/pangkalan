@@ -1,0 +1,27 @@
+{
+  "name": "@integrasi/server",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch --clear-screen=false src/index.ts",
+    "start": "cross-env NODE_ENV=production tsx src/index.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@fastify/static": "10.1.7",
+    "@fastify/websocket": "11.3.4",
+    "@integrasi/shared": "*",
+    "fastify": "5.12.7",
+    "tsx": "4.23.15",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.5",
+    "@types/ws": "8.18.2",
+    "cross-env": "10.1.0",
+    "vitest": "5.0.5",
+    "ws": "8.22.0"
+  }
+}
