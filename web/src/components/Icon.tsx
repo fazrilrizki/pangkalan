@@ -17,6 +17,7 @@ const paths = {
   phone: 'M8 3h8a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM11 18h2',
   check: 'M5 12.5l4.5 4.5L19 7.5',
   circle: 'M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16z',
+  columns: 'M4 5h16v14H4zM12 5v14',
   copy: 'M9 9h10v10H9zM5 15V5h10',
 } as const;
 

@@ -34,6 +34,12 @@ describe('stripAnsi', () => {
   it('removes CSI and OSC sequences', () => {
     expect(stripAnsi('\x1b[1;32mok\x1b[0m \x1b]0;title\x07end')).toBe('ok end');
   });
+
+  it('keeps word gaps and line jumps that a TUI draws with cursor moves', () => {
+    // Captured from Claude Code's folder-trust dialog.
+    const raw = '\x1b[17;2H❯\x1b[1CNo,\x1b[1Cexit\x1b[m\x1b[20;2HEnter\x1b[1Cto\x1b[1Cconfirm';
+    expect(stripAnsi(raw)).toBe('\n❯ No, exit\nEnter to confirm');
+  });
 });
 
 describe('StatusTracker', () => {

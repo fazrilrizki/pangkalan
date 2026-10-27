@@ -4,6 +4,7 @@ import { WebglAddon } from '@xterm/addon-webgl';
 import { Terminal } from '@xterm/xterm';
 import '@xterm/xterm/css/xterm.css';
 import { useLayoutEffect, useRef } from 'react';
+import type { ReactNode } from 'react';
 import type { ServerMessage } from '@integrasi/shared';
 import { wsUrl } from '../lib/api';
 import type { ConnectionState } from '../lib/ws-client';
@@ -14,7 +15,12 @@ import { QuickKeys } from './QuickKeys';
 
 export interface TerminalPaneProps {
   sessionId: string;
+  /** Shown on screen. Several panes are active at once when an arena is laid out side by side. */
   active: boolean;
+  /** Takes keyboard focus; defaults to `active`. */
+  focused?: boolean;
+  /** Label row above the terminal, used in the side-by-side layout. */
+  header?: ReactNode;
   onServerMessage?: (message: ServerMessage) => void;
   onConnectionChange?: (state: ConnectionState) => void;
 }
@@ -22,6 +28,8 @@ export interface TerminalPaneProps {
 export function TerminalPane({
   sessionId,
   active,
+  focused = active,
+  header,
   onServerMessage,
   onConnectionChange,
 }: TerminalPaneProps) {
@@ -114,22 +122,26 @@ export function TerminalPane({
     const fit = fitRef.current;
     if (!terminal || !fit) return;
     // Focus right away so keystrokes typed just after switching tabs are not lost.
-    terminal.focus();
+    if (focused) terminal.focus();
     // Wait a frame so the now-visible container has its real size.
     const frame = requestAnimationFrame(() => {
       fit.fit();
       socketRef.current?.send({ type: 'resize', cols: terminal.cols, rows: terminal.rows });
     });
     return () => cancelAnimationFrame(frame);
-  }, [active]);
+  }, [active, focused]);
 
   return (
     <div
-      className="h-full w-full flex-col"
+      className="h-full min-h-0 w-full min-w-0 flex-col"
       style={{ display: active ? 'flex' : 'none' }}
       data-testid={`terminal-${sessionId}`}
     >
-      <div ref={containerRef} className="isolate min-h-0 w-full flex-1" />
+      {header}
+      <div
+        ref={containerRef}
+        className={`isolate min-h-0 w-full flex-1 ${header ? 'pt-1 pl-2' : ''}`}
+      />
       <QuickKeys
         onKey={(data) => {
           socketRef.current?.send({ type: 'input', data });

@@ -96,6 +96,17 @@ export class CliRegistry {
 const quotePowerShell = (value: string) => `'${value.replaceAll("'", "''")}'`;
 
 /**
+ * PowerShell's legacy native-argument passing wraps an argument containing spaces in quotes but
+ * leaves the quotes inside it bare, so `say "hi" now` reaches the program as `say hi now`.
+ * Escaping by the MSVC argv rules first makes it arrive intact.
+ */
+export function escapeNativeArg(value: string): string {
+  const escaped = value.replace(/(\\*)"/g, (_, slashes: string) => `${slashes}${slashes}\\"`);
+  // Backslashes right before the closing quote PowerShell adds would escape it.
+  return /\s/.test(value) ? escaped.replace(/(\\+)$/, '$1$1') : escaped;
+}
+
+/**
  * Builds the shell invocation for a CLI. Running through the user's shell keeps their PATH,
  * aliases and profile; the session ends when the CLI exits.
  */
@@ -107,8 +118,19 @@ export function cliLaunchArgs(
   const commandLine = [
     '&',
     quotePowerShell(cli.command),
-    ...[...cli.args, ...extraArgs].map(quotePowerShell),
+    ...[...cli.args, ...extraArgs].map((arg) => quotePowerShell(escapeNativeArg(arg))),
   ].join(' ');
+  // Legacy passing is what escapeNativeArg is written for; pwsh 7.3+ defaults to another mode.
   // Without the explicit exit, PowerShell collapses any CLI failure to exit code 1.
-  return [...shell.args, '-Command', `${commandLine}; exit $LASTEXITCODE`];
+  return [
+    ...shell.args,
+    '-Command',
+    `$PSNativeCommandArgumentPassing = 'Legacy'; ${commandLine}; exit $LASTEXITCODE`,
+  ];
+}
+
+/** The CLI's args that carry an initial prompt, or null if it only takes one typed in. */
+export function promptLaunchArgs(cli: CliConfig, prompt: string): string[] | null {
+  if (!cli.promptArgs) return null;
+  return cli.promptArgs.map((arg) => arg.replaceAll('{prompt}', prompt));
 }

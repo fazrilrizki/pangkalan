@@ -70,7 +70,7 @@ Keluar: semuanya di bawah.
 - **Bind ke 0.0.0.0 / LAN tanpa Tailscale**: membuka shell ke jaringan tanpa identitas. Tidak akan didukung.
 - **Tailscale Funnel (publik)**: ditolak oleh desain, karena tidak ada header identitas.
 - **Sistem login/akun sendiri**: identitas didelegasikan ke Tailscale, jadi tidak perlu password store.
-- **Adu agen + worktree per sesi**: arah fase 2, bisa pakai CLI berbeda maupun model berbeda (`args` per peserta). Butuh worktree dulu.
+- **Adu agen + worktree per sesi**: arah fase 2, bisa pakai CLI berbeda maupun model berbeda (`args` per peserta). Sudah dikerjakan (2026-10-27); lihat bagian "Adu agen" di README.
 - **Inbox persetujuan khusus**: sidebar + status dot sudah memberi daftar sesi menunggu. Evaluasi ulang setelah dipakai dari HP.
 
 ## Open Questions

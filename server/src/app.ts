@@ -3,11 +3,13 @@ import path from 'node:path';
 import fastifyStatic from '@fastify/static';
 import websocket from '@fastify/websocket';
 import Fastify from 'fastify';
+import { ArenaManager } from './arenas/arena-manager';
 import { CliRegistry } from './clis/cli-registry';
 import type { ServerConfig } from './config';
 import { ProjectStore } from './projects/project-store';
 import { AccessControl } from './remote/access-control';
 import { Tailscale } from './remote/tailscale';
+import { arenaRoutes } from './routes/arenas';
 import { cliRoutes } from './routes/clis';
 import { hookRoutes } from './routes/hooks';
 import { projectRoutes } from './routes/projects';
@@ -76,6 +78,14 @@ export async function buildApp({
     onRemoteSocket: (socket, login) => access.trackRemoteSocket(socket, login),
   });
   await app.register(remoteRoutes, { access });
+
+  const arenas = new ArenaManager({
+    file: path.join(config.dataDir, 'arenas.json'),
+    worktreeRoot: path.join(config.dataDir, 'worktrees'),
+    projects,
+    launch: { sessions, clis: registry, port: config.port },
+  });
+  await app.register(arenaRoutes, { arenas });
   await app.register(hookRoutes, { sessions });
 
   // `npm start` serves the built web app; in dev Vite serves it and proxies /api and /ws.
@@ -84,6 +94,7 @@ export async function buildApp({
   }
 
   app.addHook('onClose', async () => {
+    arenas.close();
     sessions.killAll();
     if (!clis) registry.close();
   });

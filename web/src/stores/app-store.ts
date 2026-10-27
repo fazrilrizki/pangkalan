@@ -35,6 +35,8 @@ function recallActive(): string | null {
 interface AppState {
   loaded: boolean;
   error: string | null;
+  /** Outcome of an action that ends without a visible result, e.g. merging an arena winner. */
+  notice: string | null;
   projects: Project[];
   clis: CliInfo[];
   sessions: Record<string, SessionView>;
@@ -50,6 +52,10 @@ interface AppState {
   updateProject(id: string, changes: UpdateProjectInput): Promise<void>;
   removeProject(id: string): Promise<void>;
   openSession(projectId: string, cliId: string | null): Promise<void>;
+  /** Adds sessions the server already started (e.g. an arena's contestants); focuses the first. */
+  addSessions(infos: SessionInfo[]): void;
+  /** Drops tabs whose sessions the server already ended, without another DELETE. */
+  dropSessions(ids: string[]): void;
   closeSession(id: string): Promise<void>;
   /** Closes a finished session right away; asks for confirmation if it is still running. */
   requestClose(id: string): void;
@@ -61,6 +67,7 @@ interface AppState {
   applyServerMessage(id: string, message: ServerMessage): void;
   setConnection(id: string, connection: ConnectionState): void;
   setError(error: string | null): void;
+  setNotice(notice: string | null): void;
 }
 
 const toView = (info: SessionInfo): SessionView => ({ ...info, connection: 'connecting' });
@@ -68,6 +75,7 @@ const toView = (info: SessionInfo): SessionView => ({ ...info, connection: 'conn
 export const useAppStore = create<AppState>()((set, get) => ({
   loaded: false,
   error: null,
+  notice: null,
   projects: [],
   clis: [],
   sessions: {},
@@ -134,6 +142,28 @@ export const useAppStore = create<AppState>()((set, get) => ({
       activeId: info.id,
     }));
     rememberActive(info.id);
+  },
+
+  addSessions(infos) {
+    if (infos.length === 0) return;
+    set((s) => ({
+      sessions: { ...s.sessions, ...Object.fromEntries(infos.map((i) => [i.id, toView(i)])) },
+      order: [...s.order, ...infos.map((i) => i.id)],
+      activeId: infos[0]!.id,
+    }));
+    rememberActive(infos[0]!.id);
+  },
+
+  dropSessions(ids) {
+    set((s) => {
+      const order = s.order.filter((x) => !ids.includes(x));
+      const sessions = Object.fromEntries(
+        Object.entries(s.sessions).filter(([id]) => !ids.includes(id)),
+      );
+      const activeId = s.activeId && ids.includes(s.activeId) ? (order.at(-1) ?? null) : s.activeId;
+      rememberActive(activeId);
+      return { order, sessions, activeId };
+    });
   },
 
   async closeSession(id) {
@@ -203,5 +233,9 @@ export const useAppStore = create<AppState>()((set, get) => ({
 
   setError(error) {
     set({ error });
+  },
+
+  setNotice(notice) {
+    set({ notice });
   },
 }));

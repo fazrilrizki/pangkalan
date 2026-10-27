@@ -12,7 +12,8 @@
       "icon": "claude",
       "color": "#D97757",
       "statusMode": "hooks",
-      "waitingPatterns": ["Do you want to", "❯ 1\\. Yes", "\\(y/n\\)"],
+      "waitingPatterns": ["Do you want to", "❯ 1\\. Yes", "\\(y/n\\)", "Enter to confirm"],
+      "promptArgs": ["{prompt}"],
       "enabled": true
     },
     {

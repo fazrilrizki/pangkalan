@@ -1,4 +1,7 @@
 import { Fragment, useEffect, useState } from 'react';
+import { ArenaBar } from './components/ArenaBar';
+import { ArenaPaneHeader } from './components/ArenaPaneHeader';
+import { CompareDialog } from './components/CompareDialog';
 import { ExitBanner } from './components/ExitBanner';
 import { Icon } from './components/Icon';
 import { Logo } from './components/Logo';
@@ -10,14 +13,27 @@ import { useShortcuts, useWaitingTitle } from './hooks/use-app-chrome';
 import { ApiError } from './lib/api';
 import { SHORTCUT_HELP } from './lib/shortcuts';
 import { useAppStore } from './stores/app-store';
+import { arenaOf, useArenaStore } from './stores/arena-store';
 
 export function App() {
   const loaded = useAppStore((s) => s.loaded);
   const error = useAppStore((s) => s.error);
+  const notice = useAppStore((s) => s.notice);
   const order = useAppStore((s) => s.order);
   const activeId = useAppStore((s) => s.activeId);
   const active = useAppStore((s) => (s.activeId ? s.sessions[s.activeId] : undefined));
-  const { load, setError, applyServerMessage, setConnection } = useAppStore.getState();
+  const sessions = useAppStore((s) => s.sessions);
+  const { load, setError, setNotice, applyServerMessage, setConnection } = useAppStore.getState();
+  const arenas = useArenaStore((s) => s.arenas);
+  const comparing = useArenaStore((s) => s.arenas.find((a) => a.id === s.comparingId));
+  const arena = arenaOf(arenas, activeId);
+  const arenaLayout = useArenaStore((s) => (arena ? (s.layout[arena.id] ?? 'grid') : 'single'));
+  // Side by side: every live contestant of the active arena is on screen at once.
+  const sideBySide =
+    arena && arenaLayout === 'grid'
+      ? arena.entries.map((e) => e.sessionId).filter((id): id is string => !!id && !!sessions[id])
+      : [];
+  const grid = sideBySide.length > 1;
   const [sidebarOpen, setSidebarOpen] = useState(false);
   useShortcuts();
   useWaitingTitle();
@@ -33,6 +49,10 @@ export function App() {
   }, [sidebarOpen]);
 
   useEffect(() => {
+    useArenaStore
+      .getState()
+      .load()
+      .catch(() => {});
     load().catch((err: unknown) =>
       setError(
         err instanceof ApiError && err.status === 401
@@ -79,17 +99,51 @@ export function App() {
             </button>
           </div>
         )}
+        {notice && (
+          <div
+            role="status"
+            className="flex items-center justify-between gap-3 border-b border-line bg-panel py-1.5 pr-2 pl-4 text-sm"
+          >
+            {notice}
+            <button className="icon-btn" aria-label="Tutup pesan" onClick={() => setNotice(null)}>
+              <Icon name="x" size={14} />
+            </button>
+          </div>
+        )}
         <TabBar />
-        <section className="relative min-h-0 flex-1 bg-term py-2 pl-3 pr-1">
-          {order.map((id) => (
-            <TerminalPane
-              key={id}
-              sessionId={id}
-              active={id === activeId}
-              onServerMessage={(message) => applyServerMessage(id, message)}
-              onConnectionChange={(state) => setConnection(id, state)}
-            />
-          ))}
+        {arena && <ArenaBar arena={arena} />}
+        <section
+          className={`relative min-h-0 flex-1 bg-term ${
+            grid ? 'grid auto-rows-fr grid-cols-1 gap-px bg-line md:grid-cols-2' : 'py-2 pr-1 pl-3'
+          }`}
+        >
+          {order.map((id) => {
+            const inGrid = grid && sideBySide.includes(id);
+            return (
+              <TerminalPane
+                key={id}
+                sessionId={id}
+                active={grid ? inGrid : id === activeId}
+                focused={id === activeId}
+                header={(() => {
+                  const entry = inGrid ? arena?.entries.find((e) => e.sessionId === id) : undefined;
+                  return (
+                    arena &&
+                    entry && (
+                      <ArenaPaneHeader
+                        arena={arena}
+                        entry={entry}
+                        sessionId={id}
+                        focused={id === activeId}
+                      />
+                    )
+                  );
+                })()}
+                onServerMessage={(message) => applyServerMessage(id, message)}
+                onConnectionChange={(state) => setConnection(id, state)}
+              />
+            );
+          })}
           {active && active.exitCode !== null && <ExitBanner key={active.id} session={active} />}
           {loaded && order.length === 0 && (
             <div className="grid h-full place-items-center overflow-y-auto px-4 text-sm text-muted">
@@ -117,6 +171,7 @@ export function App() {
         </section>
         {active && <StatusBar session={active} />}
       </main>
+      <CompareDialog arena={comparing} />
     </div>
   );
 }

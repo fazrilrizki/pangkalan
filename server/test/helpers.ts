@@ -35,6 +35,19 @@ export const TEST_CLIS_FILE = {
       args: [FAKE_CLI_PATH],
       statusMode: 'hooks',
     },
+    {
+      id: 'fake-menu',
+      name: 'Fake Menu CLI',
+      command: process.execPath,
+      args: [FAKE_CLI_PATH, '--menu'],
+    },
+    {
+      id: 'fake-arg',
+      name: 'Fake Arg CLI',
+      command: process.execPath,
+      args: [FAKE_CLI_PATH],
+      promptArgs: ['--run', '{prompt}'],
+    },
   ],
 };
 

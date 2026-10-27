@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 import type { CliInfo, Project } from '@integrasi/shared';
+import { ArenaDialog } from './ArenaDialog';
 import { ApiError } from '../lib/api';
 import type { SessionView } from '../stores/app-store';
 import { useAppStore } from '../stores/app-store';
@@ -173,6 +174,7 @@ function ProjectItem({ project }: { project: Project }) {
   const [expanded, setExpanded] = useState(false);
   const [renaming, setRenaming] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [arenaOpen, setArenaOpen] = useState(false);
 
   const projectSessions = order
     .map((id) => sessions[id])
@@ -266,6 +268,18 @@ function ProjectItem({ project }: { project: Project }) {
             <Icon name="terminal" size={12} />
             Terminal
           </button>
+          <button
+            onClick={() => {
+              setExpanded(false);
+              setArenaOpen(true);
+            }}
+            className="chip"
+            title="Satu prompt untuk beberapa agen, tiap agen di worktree sendiri"
+            disabled={!clis.some((c) => c.enabled)}
+          >
+            <Icon name="columns" size={12} />
+            Adu agen
+          </button>
         </div>
       )}
 
@@ -297,6 +311,7 @@ function ProjectItem({ project }: { project: Project }) {
         </ul>
       )}
 
+      <ArenaDialog project={project} open={arenaOpen} onClose={() => setArenaOpen(false)} />
       <ConfirmDialog
         open={confirmDelete}
         title={`Hapus project "${project.name}"?`}

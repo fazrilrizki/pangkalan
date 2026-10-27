@@ -56,14 +56,15 @@ Saat pertama jalan, `data/clis.example.json` disalin ke `data/clis.json`. Edit f
 }
 ```
 
-| Field             | Arti                                                                                                 |
-| ----------------- | ---------------------------------------------------------------------------------------------------- |
-| `id`              | kebab-case, unik                                                                                     |
-| `command`, `args` | dijalankan lewat `shell` (`& 'command' 'arg'…`), jadi PATH, alias, dan profile PowerShell-mu berlaku |
-| `color`           | warna aksen tab (`#rrggbb`)                                                                          |
-| `statusMode`      | `heuristic` (dari output terminal) atau `hooks` (khusus Claude Code, lihat di bawah)                 |
-| `waitingPatterns` | regex; bila output terakhir cocok lalu terminal diam → status _menunggu input_                       |
-| `enabled`         | `false` untuk menyembunyikan CLI dari pilihan                                                        |
+| Field             | Arti                                                                                                                 |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `id`              | kebab-case, unik                                                                                                     |
+| `command`, `args` | dijalankan lewat `shell` (`& 'command' 'arg'…`), jadi PATH, alias, dan profile PowerShell-mu berlaku                 |
+| `color`           | warna aksen tab (`#rrggbb`)                                                                                          |
+| `statusMode`      | `heuristic` (dari output terminal) atau `hooks` (khusus Claude Code, lihat di bawah)                                 |
+| `waitingPatterns` | regex; bila output terakhir cocok lalu terminal diam → status _menunggu input_                                       |
+| `promptArgs`      | opsional; cara memberi prompt awal, `{prompt}` = isi prompt, mis. `["{prompt}"]` untuk Claude Code. Dipakai Adu agen |
+| `enabled`         | `false` untuk menyembunyikan CLI dari pilihan                                                                        |
 
 Entri yang tidak valid dilewati dan alasannya dicatat di log server; entri lain tetap jalan. `shell` harus PowerShell (`powershell.exe` atau `pwsh`).
 
@@ -74,6 +75,20 @@ Preset `antigravity` masih **nonaktif** karena command-nya belum diketahui (tida
 ### Status akurat untuk Claude Code (`statusMode: "hooks"`)
 
 Untuk CLI ber-mode `hooks`, server menulis file settings sementara (di folder temp sistem) berisi [HTTP hooks](https://code.claude.com/docs/en/hooks) yang memanggil balik `/api/hooks/:id`, lalu menjalankan Claude dengan `--settings <file>`. Settings milikmu (`~/.claude/settings.json`) tidak diubah, dan hooks-mu sendiri tetap jalan. File dihapus saat sesi berakhir. Bila hooks tidak bisa dipakai (mis. `allowedHttpHookUrls` membatasi URL), status otomatis jatuh ke heuristik.
+
+## Adu agen
+
+Satu prompt dikerjakan 2–4 agen sekaligus, lalu kamu pilih hasil terbaik. Klik project, lalu chip **Adu agen**.
+
+1. Tulis prompt, pilih CLI tiap peserta. Kolom argumen tambahan bisa dipakai untuk membedakan model, misalnya `--model opus` lawan `--model sonnet` pada CLI yang sama.
+2. Pangkalan membuat satu git worktree dan satu branch per peserta (`adu/<id>-<huruf>-<cli>`) dari commit terakhir branch aktif. Worktree disimpan di `data/worktrees/`, di luar repo-mu.
+3. Prompt dikirim sebagai argumen awal bila CLI punya `promptArgs` (Claude Code: `["{prompt}"]`). Ini cara yang paling andal, karena CLI sendiri yang menangani dialog pembukanya. Tanpa `promptArgs`, prompt diketik ke terminal begitu CLI diam dan tidak sedang menampilkan menu pilihan. Bila belum terkirim, bar adu menampilkan tombol **kirim prompt**.
+4. Bar di atas terminal: **Berdampingan / Satu-satu**, **Bandingkan**, **Batalkan**.
+5. **Bandingkan** menampilkan diff tiap peserta terhadap commit awal, termasuk file yang belum di-commit. **Pilih sebagai pemenang** akan menghentikan semua peserta, meng-commit hasil masing-masing ke branch-nya, lalu merge pemenang ke branch asal (`--no-ff`) dan menghapus worktree.
+
+Merge ditolak tanpa mengubah apa pun bila branch asal sedang tidak aktif atau punya perubahan yang belum di-commit. Bila merge konflik, merge dibatalkan dan worktree tetap ada. Branch semua peserta tidak dihapus; hapus sendiri dengan `git branch -D adu/...` bila tidak perlu.
+
+Project harus berupa repo git dengan minimal satu commit. Perubahan yang belum di-commit di folder project tidak ikut terlihat oleh peserta.
 
 ## Akses dari HP (Tailscale)
 

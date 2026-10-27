@@ -111,6 +111,11 @@ export class Session {
     if (this.isRunning) this.pty.resize(cols, rows);
   }
 
+  /** What is on screen since the user last typed, without escape codes. */
+  textSinceInput(): string {
+    return this.tracker.textSinceInput();
+  }
+
   /** Status reported by the CLI itself (e.g. Claude Code hooks). */
   reportStatus(status: LiveStatus) {
     if (!this.isRunning) return;
