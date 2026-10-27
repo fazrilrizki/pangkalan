@@ -19,9 +19,16 @@ const projectRow = (page: Page, folder: string) =>
   page.getByRole('button', { name: new RegExp(`^${path.basename(folder)}\\s`) });
 
 async function addProject(page: Page, folder: string) {
+  // Start the folder picker next to the folder instead of clicking down from the home folder.
+  await page.evaluate(
+    (dir) => localStorage.setItem('integrasi.lastFolder', dir),
+    path.dirname(folder),
+  );
   await page.getByRole('button', { name: 'Tambah project', exact: true }).click();
-  await page.getByLabel('Path folder').fill(folder);
-  await page.getByRole('button', { name: 'Tambah', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Pilih folder project' });
+  await dialog.getByRole('button', { name: path.basename(folder), exact: true }).click();
+  await expect(dialog.getByLabel('Folder saat ini')).toHaveText(folder);
+  await dialog.getByRole('button', { name: 'Pilih folder ini' }).click();
   await expect(projectRow(page, folder)).toBeVisible();
 }
 

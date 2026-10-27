@@ -13,7 +13,7 @@ Web app yang jalan di **localhost** untuk menjalankan AI CLI agent (Claude Code,
 
 ### User Stories
 
-1. **Project sidebar** — Sebagai user, saya tambah project (path folder), lihat daftarnya di sidebar, hapus/rename, tandai favorit.
+1. **Project sidebar** — Sebagai user, saya tambah project (pilih folder lewat explorer di app), lihat daftarnya di sidebar, hapus/rename, tandai favorit.
 2. **Buka sesi** — Saya klik project → pilih CLI → tab terminal baru terbuka dengan CLI jalan di folder project itu.
 3. **Multi-tab** — Saya punya banyak tab sekaligus (project/CLI berbeda), pindah antar tab tanpa sesi lain terganggu.
 4. **Status animasi** — Tiap tab (dan entri sidebar) tampil status: `working` (denyut biru), `waiting` (glow kuning berkedip), `idle` (hijau statis), `exited/error` (merah).
@@ -117,6 +117,7 @@ Config divalidasi Zod saat start; entri invalid → ditolak dengan pesan jelas, 
 | POST   | `/api/projects`         | tambah `{name, path}` — path harus folder yang ada |
 | PATCH  | `/api/projects/:id`     | rename / favorit                                   |
 | DELETE | `/api/projects/:id`     | hapus dari list (tidak menyentuh folder)           |
+| GET    | `/api/fs/dirs?path=`    | isi subfolder untuk folder picker (default: home)  |
 | GET    | `/api/clis`             | list CLI dari config                               |
 | GET    | `/api/sessions`         | list sesi aktif + status                           |
 | POST   | `/api/sessions`         | buat sesi `{projectId, cliId}`                     |
@@ -232,7 +233,7 @@ Server ini bisa menjalankan perintah shell, jadi situs web lain yang terbuka di 
 ## Success Criteria
 
 1. `npm start` → buka URL bertoken → UI tampil < 2 dtk.
-2. Tambah project via path → muncul di sidebar, tersimpan setelah restart server.
+2. Tambah project via folder picker → muncul di sidebar, tersimpan setelah restart server.
 3. Klik project → pilih Claude Code → terminal muncul dengan `claude` jalan di folder itu, interaktif penuh (warna, slash command, approval, resize).
 4. Bisa ≥ 5 sesi paralel tanpa input/output tercampur.
 5. Refresh browser → semua tab pulih, scrollback terakhir tampil, input jalan lagi dalam < 1 dtk.
