@@ -10,6 +10,14 @@ const paths = {
   bell: 'M6 16V11a6 6 0 1 1 12 0v5l2 2H4zM10 20a2 2 0 0 0 4 0',
   bellOff: 'M6 16V11a6 6 0 0 1 9.5-4.9M18 11v5l2 2H8M10 20a2 2 0 0 0 4 0M3 3l18 18',
   refresh: 'M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7',
+  sun: 'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4',
+  moon: 'M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z',
+  monitor: 'M3 5h18v11H3zM8 20h8M12 16v4',
+  menu: 'M4 6h16M4 12h16M4 18h16',
+  phone: 'M8 3h8a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM11 18h2',
+  check: 'M5 12.5l4.5 4.5L19 7.5',
+  circle: 'M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16z',
+  copy: 'M9 9h10v10H9zM5 15V5h10',
 } as const;
 
 export type IconName = keyof typeof paths;

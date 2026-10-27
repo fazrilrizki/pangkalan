@@ -40,6 +40,6 @@ export function useWaitingTitle() {
     (s) => Object.values(s.sessions).filter((session) => session.status === 'waiting').length,
   );
   useEffect(() => {
-    document.title = waiting > 0 ? `(${waiting}) menunggu · Integrasi AI` : 'Integrasi AI';
+    document.title = waiting > 0 ? `(${waiting}) menunggu · Pangkalan` : 'Pangkalan';
   }, [waiting]);
 }

@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import type { FastifyInstance } from 'fastify';
+import type { WebSocket } from 'ws';
 import { z } from 'zod';
 import { WS_CLOSE_SESSION_NOT_FOUND, clientMessageSchema } from '@integrasi/shared';
 import type { CliRegistry } from '../clis/cli-registry';
@@ -27,11 +28,13 @@ export interface SessionRoutesOptions {
   projects: ProjectStore;
   /** Port hooks call back on. */
   port: number;
+  /** Lets remote terminals be closed when their access is revoked. */
+  onRemoteSocket?: (socket: WebSocket, login: string) => void;
 }
 
 export async function sessionRoutes(
   app: FastifyInstance,
-  { sessions, clis, projects, port }: SessionRoutesOptions,
+  { sessions, clis, projects, port, onRemoteSocket }: SessionRoutesOptions,
 ) {
   app.get('/api/sessions', async () => sessions.list());
 
@@ -98,6 +101,7 @@ export async function sessionRoutes(
         socket.close(WS_CLOSE_SESSION_NOT_FOUND, 'session not found');
         return;
       }
+      if (request.remoteLogin !== null) onRemoteSocket?.(socket, request.remoteLogin);
 
       const detach = session.attach((message) => {
         if (socket.readyState === socket.OPEN) socket.send(JSON.stringify(message));

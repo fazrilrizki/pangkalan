@@ -8,7 +8,9 @@ import type { ServerMessage } from '@integrasi/shared';
 import { wsUrl } from '../lib/api';
 import type { ConnectionState } from '../lib/ws-client';
 import { SessionSocket } from '../lib/ws-client';
-import { terminalTheme } from '../lib/terminal-theme';
+import { terminalThemes } from '../lib/terminal-theme';
+import { useTheme } from '../lib/theme';
+import { QuickKeys } from './QuickKeys';
 
 export interface TerminalPaneProps {
   sessionId: string;
@@ -29,17 +31,20 @@ export function TerminalPane({
   const socketRef = useRef<SessionSocket | null>(null);
   const handlersRef = useRef({ onServerMessage, onConnectionChange });
   handlersRef.current = { onServerMessage, onConnectionChange };
+  const { theme } = useTheme();
+  const themeRef = useRef(theme);
+  themeRef.current = theme;
 
   useLayoutEffect(() => {
     const container = containerRef.current!;
     const terminal = new Terminal({
       cursorBlink: true,
-      fontFamily: '"Cascadia Code", "JetBrains Mono", Consolas, monospace',
+      fontFamily: '"Cascadia Code", "Cascadia Mono", Consolas, monospace',
       fontSize: 14,
       lineHeight: 1.15,
       scrollback: 10_000,
       allowProposedApi: true,
-      theme: terminalTheme,
+      theme: terminalThemes[themeRef.current],
     });
     const fit = new FitAddon();
     terminal.loadAddon(fit);
@@ -100,6 +105,10 @@ export function TerminalPane({
   }, [sessionId]);
 
   useLayoutEffect(() => {
+    if (terminalRef.current) terminalRef.current.options.theme = terminalThemes[theme];
+  }, [theme]);
+
+  useLayoutEffect(() => {
     if (!active) return;
     const terminal = terminalRef.current;
     const fit = fitRef.current;
@@ -116,10 +125,17 @@ export function TerminalPane({
 
   return (
     <div
-      ref={containerRef}
-      className="isolate h-full w-full"
-      style={{ display: active ? 'block' : 'none' }}
+      className="h-full w-full flex-col"
+      style={{ display: active ? 'flex' : 'none' }}
       data-testid={`terminal-${sessionId}`}
-    />
+    >
+      <div ref={containerRef} className="isolate min-h-0 w-full flex-1" />
+      <QuickKeys
+        onKey={(data) => {
+          socketRef.current?.send({ type: 'input', data });
+          terminalRef.current?.focus();
+        }}
+      />
+    </div>
   );
 }
