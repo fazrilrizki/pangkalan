@@ -18,7 +18,7 @@ export function TabBar() {
       <div
         role="tablist"
         aria-label="Sesi terbuka"
-        className="flex shrink-0 items-end gap-1 overflow-x-auto border-b border-line bg-panel px-2 pt-2"
+        className="flex shrink-0 items-end gap-px overflow-x-auto border-b border-line bg-panel px-2 pt-1.5"
       >
         {order.map((id) => {
           const session = sessions[id];
@@ -63,22 +63,23 @@ function Tab({
 }) {
   const project = useAppStore((s) => s.projects.find((p) => p.id === session.projectId));
   const cli = useAppStore((s) => s.clis.find((c) => c.id === session.cliId));
-  const color = cli?.color ?? '#8b93a7';
+  const color = cli?.color ?? 'var(--color-muted)';
 
   return (
     <div
-      className={`group relative flex max-w-60 min-w-36 items-center gap-2 rounded-t-lg border border-b-0 pr-1 pl-3 text-sm transition-colors ${
+      className={`group relative -mb-px flex max-w-60 min-w-36 shrink-0 items-center gap-2 rounded-t-md border border-b-0 pr-1 pl-3 text-sm transition-colors ${
         active
-          ? 'border-line bg-[#0d1017] text-fg'
+          ? 'border-line bg-term text-fg'
           : session.status === 'waiting'
-            ? 'border-waiting/40 bg-waiting/[0.06] text-fg shadow-[0_-2px_14px_-4px_var(--color-waiting)]'
-            : 'border-transparent text-muted hover:bg-white/[0.03] hover:text-fg'
+            ? 'border-transparent bg-waiting/10 text-fg'
+            : 'border-transparent text-muted hover:bg-hover hover:text-fg'
       }`}
     >
-      {active && (
+      {/* Top edge: the CLI's own color on the active tab, amber on a background tab waiting for input. */}
+      {(active || session.status === 'waiting') && (
         <span
-          className="absolute inset-x-2 top-0 h-0.5 rounded-full"
-          style={{ background: color }}
+          className="absolute inset-x-0 top-0 h-0.5 rounded-t-md"
+          style={{ background: active ? color : 'var(--color-waiting)' }}
           aria-hidden="true"
         />
       )}
@@ -88,7 +89,7 @@ function Tab({
         onClick={onSelect}
         onAuxClick={(e) => e.button === 1 && onClose()}
         className="flex min-w-0 flex-1 items-center gap-2 py-2 text-left"
-        title={`${session.title} — ${session.cwd}`}
+        title={`${session.title} (${session.cwd})`}
       >
         <StatusDot status={session.status} />
         <span className="min-w-0 truncate">
@@ -96,16 +97,13 @@ function Tab({
           {project && <span className="text-muted"> · {project.name}</span>}
         </span>
         {session.connection === 'reconnecting' && (
-          <span className="text-[10px] text-waiting" title="Menyambung ulang">
-            ⟳
+          <span className="text-waiting" title="Menyambung ulang">
+            <Icon name="refresh" size={12} className="motion-safe:animate-spin" />
+            <span className="sr-only">Menyambung ulang</span>
           </span>
         )}
       </button>
-      <button
-        className="icon-btn opacity-60 group-hover:opacity-100"
-        aria-label={`Tutup ${session.title}`}
-        onClick={onClose}
-      >
+      <button className="icon-btn" aria-label={`Tutup ${session.title}`} onClick={onClose}>
         <Icon name="x" size={13} />
       </button>
     </div>

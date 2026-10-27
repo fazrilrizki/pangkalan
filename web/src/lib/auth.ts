@@ -2,7 +2,8 @@ const STORAGE_KEY = 'integrasi.token';
 
 let memoryToken: string | null = null;
 
-function store(token: string) {
+/** Also used after the token is rotated from the remote panel. */
+export function storeToken(token: string) {
   memoryToken = token;
   try {
     localStorage.setItem(STORAGE_KEY, token);
@@ -16,7 +17,7 @@ export function captureTokenFromUrl() {
   const url = new URL(window.location.href);
   const token = url.searchParams.get('token');
   if (!token) return;
-  store(token);
+  storeToken(token);
   url.searchParams.delete('token');
   window.history.replaceState(null, '', url.pathname + url.search + url.hash);
 }

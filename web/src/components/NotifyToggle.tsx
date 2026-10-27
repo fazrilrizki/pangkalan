@@ -37,7 +37,7 @@ export function NotifyToggle() {
 
   return (
     <button
-      className={`icon-btn ${active ? 'text-waiting' : ''}`}
+      className={`icon-btn ${active ? 'text-fg' : ''}`}
       aria-label={label}
       title={label}
       aria-pressed={active}

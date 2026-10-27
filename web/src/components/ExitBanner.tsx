@@ -19,10 +19,10 @@ export function ExitBanner({ session }: { session: SessionView }) {
   return (
     <div
       role="status"
-      className="absolute inset-x-4 bottom-4 z-10 flex items-center gap-3 rounded-xl border border-line bg-panel/95 px-4 py-3 shadow-2xl backdrop-blur"
+      className="absolute inset-x-3 bottom-3 z-10 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-line-strong bg-panel px-4 py-3 shadow-overlay"
     >
       <span className={`size-2.5 rounded-full ${failed ? 'bg-error' : 'bg-exited'}`} />
-      <p className="flex-1 text-sm">
+      <p className="min-w-0 flex-1 text-sm">
         <span className="font-medium">{session.title}</span>{' '}
         <span className="text-muted">
           {failed ? `berhenti dengan kode ${session.exitCode}` : 'sudah selesai'}

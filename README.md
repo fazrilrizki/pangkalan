@@ -1,4 +1,4 @@
-# Integrasi AI
+# Pangkalan
 
 Web app lokal untuk menjalankan AI CLI (Claude Code, Antigravity, atau CLI lain) di **terminal asli dalam tab browser**. Pilih project, pilih CLI, kerja. Tidak perlu lagi buka banyak jendela terminal dan `cd` ke folder project.
 
@@ -75,6 +75,27 @@ Preset `antigravity` masih **nonaktif** karena command-nya belum diketahui (tida
 
 Untuk CLI ber-mode `hooks`, server menulis file settings sementara (di folder temp sistem) berisi [HTTP hooks](https://code.claude.com/docs/en/hooks) yang memanggil balik `/api/hooks/:id`, lalu menjalankan Claude dengan `--settings <file>`. Settings milikmu (`~/.claude/settings.json`) tidak diubah, dan hooks-mu sendiri tetap jalan. File dihapus saat sesi berakhir. Bila hooks tidak bisa dipakai (mis. `allowedHttpHookUrls` membatasi URL), status otomatis jatuh ke heuristik.
 
+## Akses dari HP (Tailscale)
+
+Pantau dan jawab sesi yang menunggu input dari HP, tanpa membuka server ke internet. Mode ini **mati secara default**.
+
+1. Pasang [Tailscale](https://tailscale.com/download) di laptop dan HP, login ke tailnet yang sama. Di [pengaturan DNS tailnet](https://login.tailscale.com/admin/dns), nyalakan MagicDNS dan HTTPS Certificates.
+2. Di Pangkalan (`npm start`), klik ikon HP di sidebar. Panel memeriksa ketiga syarat di atas dan menunjukkan yang belum beres.
+3. Nyalakan **Izinkan akses dari HP**. Pangkalan menjalankan `tailscale serve --bg 4317` dan mengisi daftar akun dengan login Tailscale pemilik laptop.
+4. Scan QR di panel dari HP.
+
+Server tetap listen di `127.0.0.1`; Tailscale yang meneruskan HTTPS dari tailnet. Status panel disimpan di `data/remote.json` dan berlaku lagi setelah restart.
+
+Pengaturan akses hanya bisa diubah dari laptop. Dari HP, panel hanya menampilkan informasi, supaya akses remote tidak bisa memperluas aksesnya sendiri. Mematikan akses, menghapus akun dari daftar, atau **Buat token baru** langsung memutus terminal yang sedang terbuka di HP.
+
+Request remote wajib membawa token **dan** header `Tailscale-User-Login` yang ada di daftar akun. Header itu di-set oleh `tailscale serve` untuk pengguna tailnet. Trafik Tailscale Funnel (publik) tidak membawanya, jadi ditolak. Endpoint hooks tidak bisa diakses dari remote.
+
+> Siapa pun di daftar akun bisa menjalankan shell di laptopmu. Isi hanya dengan akunmu sendiri.
+
+Alternatif tanpa panel: jalankan server dengan `PANGKALAN_REMOTE_ORIGIN='https://laptop.tail1234.ts.net'` dan `PANGKALAN_REMOTE_USERS='kamu@github'` (pisahkan koma), lalu `tailscale serve --bg 4317` sendiri. Env ini menimpa `data/remote.json` saat start.
+
+Di layar sempit, di bawah terminal ada tombol cepat (`y`, `n`, `Enter`, `Esc`, `↑`, `↓`, `Tab`, `^C`) untuk menjawab prompt tanpa keyboard khusus.
+
 ## Shortcut
 
 | Tombol                      | Aksi                                                 |
@@ -88,7 +109,7 @@ Untuk CLI ber-mode `hooks`, server menulis file settings sementara (di folder te
 
 ## Keamanan
 
-- Listen hanya di `127.0.0.1:4317` (`PORT` untuk mengganti).
+- Listen hanya di `127.0.0.1:4317` (`PORT` untuk mengganti). Akses remote hanya lewat `tailscale serve` dengan allowlist user (lihat di atas).
 - Semua `/api` dan `/ws` wajib token; header `Origin` dan `Host` dicek untuk mencegah situs lain di browsermu (cross-site WebSocket, DNS rebinding) mengakses server.
 - Perintah yang dijalankan hanya berasal dari `data/clis.json`, tidak pernah dari request.
 - Endpoint hooks memakai secret per sesi, bukan token utama.

@@ -18,7 +18,7 @@ const COLOR: Record<SessionStatus, string> = {
 };
 
 /**
- * working = blue dot with an expanding pulse ring, waiting = blinking amber glow,
+ * working = blue dot with an expanding pulse ring, waiting = blinking amber dot,
  * idle/exited/error = static dot. Reduced motion keeps every state static but distinct.
  */
 export function StatusDot({ status, size = 8 }: { status: SessionStatus; size?: number }) {
@@ -53,18 +53,7 @@ export function StatusDot({ status, size = 8 }: { status: SessionStatus; size?: 
       <motion.span
         className="relative rounded-full"
         style={{ width: size, height: size, background: color }}
-        animate={
-          status === 'waiting' && animate
-            ? {
-                opacity: [1, 0.35, 1],
-                boxShadow: [
-                  `0 0 0px 0px ${color}`,
-                  `0 0 10px 3px ${color}`,
-                  `0 0 0px 0px ${color}`,
-                ],
-              }
-            : { opacity: 1, boxShadow: '0 0 0px 0px transparent' }
-        }
+        animate={{ opacity: status === 'waiting' && animate ? [1, 0.3, 1] : 1 }}
         transition={
           status === 'waiting' && animate
             ? { duration: 1.1, repeat: Infinity, ease: 'easeInOut' }

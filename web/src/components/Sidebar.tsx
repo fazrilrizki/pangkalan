@@ -6,8 +6,11 @@ import type { SessionView } from '../stores/app-store';
 import { useAppStore } from '../stores/app-store';
 import { ConfirmDialog } from './ConfirmDialog';
 import { Icon } from './Icon';
+import { Logo } from './Logo';
 import { NotifyToggle } from './NotifyToggle';
+import { RemotePanel } from './RemotePanel';
 import { StatusDot } from './StatusDot';
+import { ThemeToggle } from './ThemeToggle';
 
 const errorMessage = (err: unknown) => (err instanceof ApiError ? err.message : String(err));
 
@@ -17,54 +20,83 @@ export function sortProjects(projects: Project[]): Project[] {
   );
 }
 
-export function Sidebar() {
+export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const projects = useAppStore((s) => s.projects);
   const [adding, setAdding] = useState(false);
+  const [remoteOpen, setRemoteOpen] = useState(false);
   const sorted = useMemo(() => sortProjects(projects), [projects]);
 
   return (
-    <aside className="flex h-full w-72 shrink-0 flex-col border-r border-line bg-panel">
-      <div className="flex items-center justify-between px-4 pt-4 pb-2">
-        <div className="flex items-center gap-2">
-          <span className="grid size-7 place-items-center rounded-md bg-accent text-bg">
-            <Icon name="terminal" size={15} />
+    <>
+      <aside
+        id="sidebar"
+        className={`fixed inset-y-0 left-0 z-30 flex h-full w-72 max-w-[85vw] shrink-0 flex-col border-r border-line bg-panel transition-[translate,visibility] duration-200 md:static md:visible md:translate-x-0 ${
+          open ? 'translate-x-0' : 'invisible -translate-x-full'
+        }`}
+      >
+        <div className="flex items-center justify-between gap-2 py-3 pr-2 pl-4">
+          <span className="flex items-center gap-2 text-[15px] font-semibold">
+            <Logo />
+            Pangkalan
           </span>
-          <span className="font-semibold tracking-tight">Integrasi AI</span>
+          <div className="flex items-center">
+            <button
+              className="icon-btn"
+              aria-label="Akses dari HP"
+              title="Akses dari HP"
+              aria-haspopup="dialog"
+              onClick={() => setRemoteOpen(true)}
+            >
+              <Icon name="phone" />
+            </button>
+            <ThemeToggle />
+            <NotifyToggle />
+            <button className="icon-btn md:hidden" aria-label="Tutup sidebar" onClick={onClose}>
+              <Icon name="x" />
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-0.5">
-          <NotifyToggle />
+
+        <div className="flex items-center justify-between py-1 pr-2 pl-4">
+          <h2 className="text-xs font-medium text-muted">
+            Project
+            {projects.length > 0 && <span className="ml-1.5 font-mono">{projects.length}</span>}
+          </h2>
           <button
             className="icon-btn"
             aria-label="Tambah project"
             title="Tambah project"
+            aria-expanded={adding}
             onClick={() => setAdding((v) => !v)}
           >
-            <Icon name={adding ? 'x' : 'plus'} />
+            <Icon name={adding ? 'x' : 'plus'} size={15} />
           </button>
         </div>
-      </div>
 
-      {adding && <AddProjectForm onDone={() => setAdding(false)} />}
+        {adding && <AddProjectForm onDone={() => setAdding(false)} />}
 
-      <p className="px-4 pt-3 pb-1 text-[11px] font-medium tracking-wider text-muted uppercase">
-        Projects
-      </p>
-      <nav className="min-h-0 flex-1 overflow-y-auto px-2 pb-4" aria-label="Daftar project">
-        {sorted.length === 0 && !adding && (
-          <button
-            className="mx-2 mt-2 w-[calc(100%-1rem)] rounded-lg border border-dashed border-line px-3 py-6 text-sm text-muted hover:border-accent/50 hover:text-fg"
-            onClick={() => setAdding(true)}
-          >
-            Tambah project pertama
-          </button>
-        )}
-        <ul className="space-y-0.5">
-          {sorted.map((project) => (
-            <ProjectItem key={project.id} project={project} />
-          ))}
-        </ul>
-      </nav>
-    </aside>
+        <nav className="min-h-0 flex-1 overflow-y-auto px-2 pb-4" aria-label="Daftar project">
+          {sorted.length === 0 && !adding && (
+            <div className="mx-2 mt-2 rounded-lg border border-dashed border-line-strong px-4 py-5 text-sm">
+              <p className="text-fg">Belum ada project</p>
+              <p className="mt-1 text-muted">
+                Tambahkan folder kerja, lalu buka CLI langsung di dalamnya.
+              </p>
+              <button className="btn-primary mt-4" onClick={() => setAdding(true)}>
+                <Icon name="plus" size={14} />
+                Tambah project pertama
+              </button>
+            </div>
+          )}
+          <ul className="space-y-px">
+            {sorted.map((project) => (
+              <ProjectItem key={project.id} project={project} />
+            ))}
+          </ul>
+        </nav>
+      </aside>
+      <RemotePanel open={remoteOpen} onClose={() => setRemoteOpen(false)} />
+    </>
   );
 }
 
@@ -90,7 +122,10 @@ function AddProjectForm({ onDone }: { onDone: () => void }) {
   }
 
   return (
-    <form onSubmit={(e) => void submit(e)} className="mx-3 space-y-2 rounded-xl bg-panel-2 p-3">
+    <form
+      onSubmit={(e) => void submit(e)}
+      className="mx-3 mb-2 space-y-3 rounded-lg border border-line bg-panel-2 p-3"
+    >
       <label className="block text-xs text-muted">
         Path folder
         <input
@@ -142,6 +177,7 @@ function ProjectItem({ project }: { project: Project }) {
   const projectSessions = order
     .map((id) => sessions[id])
     .filter((s): s is SessionView => s?.projectId === project.id);
+  const holdsActive = projectSessions.some((s) => s.id === activeId);
 
   const run = (action: Promise<unknown>) =>
     action.catch((err: unknown) => setError(errorMessage(err)));
@@ -153,7 +189,7 @@ function ProjectItem({ project }: { project: Project }) {
 
   return (
     <li>
-      <div className="group flex items-center gap-1 rounded-lg pr-1 hover:bg-white/[0.04]">
+      <div className="group flex items-center rounded-md pr-1 hover:bg-hover">
         <button
           className="flex min-w-0 flex-1 items-center gap-2 px-2 py-2 text-left"
           aria-expanded={expanded}
@@ -179,15 +215,17 @@ function ProjectItem({ project }: { project: Project }) {
             />
           ) : (
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-sm">{project.name}</span>
-              <span className="block truncate font-mono text-[11px] text-muted">
-                {project.path}
+              <span className={`block truncate text-sm ${holdsActive ? 'font-semibold' : ''}`}>
+                {project.name}
+              </span>
+              <span className="block truncate-start font-mono text-[11px] text-muted">
+                <bdi>{project.path}</bdi>
               </span>
             </span>
           )}
         </button>
         <button
-          className={`icon-btn ${project.favorite ? 'text-waiting' : 'opacity-0 group-hover:opacity-100 focus:opacity-100'}`}
+          className={`icon-btn ${project.favorite ? 'text-fg' : 'reveal-on-hover'}`}
           aria-label={project.favorite ? 'Hapus dari favorit' : 'Jadikan favorit'}
           aria-pressed={project.favorite}
           onClick={() => void run(updateProject(project.id, { favorite: !project.favorite }))}
@@ -195,14 +233,14 @@ function ProjectItem({ project }: { project: Project }) {
           <Icon name="star" size={14} filled={project.favorite} />
         </button>
         <button
-          className="icon-btn opacity-0 group-hover:opacity-100 focus:opacity-100"
+          className="icon-btn reveal-on-hover"
           aria-label={`Ganti nama ${project.name}`}
           onClick={() => setRenaming(true)}
         >
           <Icon name="pencil" size={14} />
         </button>
         <button
-          className="icon-btn opacity-0 group-hover:opacity-100 focus:opacity-100 hover:!text-error"
+          className="icon-btn reveal-on-hover hover:!text-error"
           aria-label={`Hapus ${project.name}`}
           onClick={() => setConfirmDelete(true)}
         >
@@ -211,23 +249,20 @@ function ProjectItem({ project }: { project: Project }) {
       </div>
 
       {expanded && (
-        <div className="mb-2 ml-6 flex flex-wrap gap-1.5 pt-1" role="group" aria-label="Pilih CLI">
+        <div className="mb-2 ml-7 flex flex-wrap gap-1.5 pt-1" role="group" aria-label="Pilih CLI">
           {clis.map((cli) => (
             <button
               key={cli.id}
               disabled={!cli.enabled}
               title={cli.enabled ? `Buka ${cli.name}` : `${cli.name} dinonaktifkan di clis.json`}
               onClick={() => void launch(cli)}
-              className="inline-flex items-center gap-1.5 rounded-md border border-line bg-panel-2 px-2 py-1 text-xs hover:border-white/20 disabled:cursor-not-allowed disabled:opacity-40"
+              className="chip"
             >
               <span className="size-2 rounded-full" style={{ background: cli.color }} />
               {cli.name}
             </button>
           ))}
-          <button
-            onClick={() => void launch(null)}
-            className="inline-flex items-center gap-1.5 rounded-md border border-line bg-panel-2 px-2 py-1 text-xs hover:border-white/20"
-          >
+          <button onClick={() => void launch(null)} className="chip">
             <Icon name="terminal" size={12} />
             Terminal
           </button>
@@ -235,14 +270,23 @@ function ProjectItem({ project }: { project: Project }) {
       )}
 
       {projectSessions.length > 0 && (
-        <ul className="mb-1 ml-6 space-y-0.5 border-l border-line pl-2">
+        <ul className="mb-1.5 ml-[15px] space-y-px border-l border-line pl-2.5">
           {projectSessions.map((session) => (
-            <li key={session.id}>
+            <li key={session.id} className="relative">
+              {session.id === activeId && (
+                // Marks the session shown in the terminal, on the project's session thread.
+                <span
+                  className="absolute top-1 bottom-1 -left-[11px] w-0.5 rounded-full bg-accent"
+                  aria-hidden="true"
+                />
+              )}
               <button
                 onClick={() => setActive(session.id)}
                 aria-current={session.id === activeId}
-                className={`flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-xs ${
-                  session.id === activeId ? 'bg-white/[0.07] text-fg' : 'text-muted hover:text-fg'
+                className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs [@media(pointer:coarse)]:min-h-11 ${
+                  session.id === activeId
+                    ? 'bg-selected text-fg'
+                    : 'text-muted hover:bg-hover hover:text-fg'
                 }`}
               >
                 <StatusDot status={session.status} />
