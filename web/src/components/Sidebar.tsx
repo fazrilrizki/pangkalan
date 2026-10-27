@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
-import type { FormEvent } from 'react';
 import type { CliInfo, Project } from '@integrasi/shared';
 import { ApiError } from '../lib/api';
 import type { SessionView } from '../stores/app-store';
 import { useAppStore } from '../stores/app-store';
+import { AddProjectDialog } from './AddProjectDialog';
 import { ConfirmDialog } from './ConfirmDialog';
 import { Icon } from './Icon';
 import { Logo } from './Logo';
@@ -66,21 +66,19 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
             className="icon-btn"
             aria-label="Tambah project"
             title="Tambah project"
-            aria-expanded={adding}
-            onClick={() => setAdding((v) => !v)}
+            aria-haspopup="dialog"
+            onClick={() => setAdding(true)}
           >
-            <Icon name={adding ? 'x' : 'plus'} size={15} />
+            <Icon name="plus" size={15} />
           </button>
         </div>
 
-        {adding && <AddProjectForm onDone={() => setAdding(false)} />}
-
         <nav className="min-h-0 flex-1 overflow-y-auto px-2 pb-4" aria-label="Daftar project">
-          {sorted.length === 0 && !adding && (
+          {sorted.length === 0 && (
             <div className="mx-2 mt-2 rounded-lg border border-dashed border-line-strong px-4 py-5 text-sm">
               <p className="text-fg">Belum ada project</p>
               <p className="mt-1 text-muted">
-                Tambahkan folder kerja, lalu buka CLI langsung di dalamnya.
+                Pilih folder kerja, lalu buka CLI langsung di dalamnya.
               </p>
               <button className="btn-primary mt-4" onClick={() => setAdding(true)}>
                 <Icon name="plus" size={14} />
@@ -95,71 +93,9 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
           </ul>
         </nav>
       </aside>
+      <AddProjectDialog open={adding} onClose={() => setAdding(false)} />
       <RemotePanel open={remoteOpen} onClose={() => setRemoteOpen(false)} />
     </>
-  );
-}
-
-function AddProjectForm({ onDone }: { onDone: () => void }) {
-  const addProject = useAppStore((s) => s.addProject);
-  const [path, setPath] = useState('');
-  const [name, setName] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  async function submit(e: FormEvent) {
-    e.preventDefault();
-    setBusy(true);
-    setError(null);
-    try {
-      await addProject(path.trim(), name.trim() || undefined);
-      onDone();
-    } catch (err) {
-      setError(errorMessage(err));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <form
-      onSubmit={(e) => void submit(e)}
-      className="mx-3 mb-2 space-y-3 rounded-lg border border-line bg-panel-2 p-3"
-    >
-      <label className="block text-xs text-muted">
-        Path folder
-        <input
-          className="field mt-1 font-mono"
-          placeholder="C:\project\aplikasi-saya"
-          value={path}
-          onChange={(e) => setPath(e.target.value)}
-          autoFocus
-          required
-        />
-      </label>
-      <label className="block text-xs text-muted">
-        Nama (opsional)
-        <input
-          className="field mt-1"
-          placeholder="Nama folder"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-      </label>
-      {error && (
-        <p role="alert" className="text-xs text-error">
-          {error}
-        </p>
-      )}
-      <div className="flex justify-end gap-2">
-        <button type="button" className="btn-ghost" onClick={onDone}>
-          Batal
-        </button>
-        <button type="submit" className="btn-primary" disabled={busy || !path.trim()}>
-          Tambah
-        </button>
-      </div>
-    </form>
   );
 }
 
