@@ -366,10 +366,15 @@ export class ArenaManager {
       if (deleteBranches) await git(top, ['branch', '-D', entry.branch]).catch(() => {});
     }
     await git(top, ['worktree', 'prune']).catch(() => {});
-    fs.rmSync(path.join(this.options.worktreeRoot, arena.id.slice(0, 8)), {
-      recursive: true,
-      force: true,
-    });
+    // On Windows a just-killed CLI can hold files open for a moment, or longer when it left a
+    // child process behind. A leftover folder is only clutter; it must not fail a merge or
+    // discard that has already happened.
+    const dir = path.join(this.options.worktreeRoot, arena.id.slice(0, 8));
+    try {
+      fs.rmSync(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
+    } catch (err) {
+      console.warn(`[arena] could not remove ${dir}: ${(err as Error).message}`);
+    }
   }
 
   private async repoTop(projectPath: string): Promise<string> {
