@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { CliInfo, SessionInfo } from '@integrasi/shared';
-import { CliRegistry, cliLaunchArgs } from '../src/clis/cli-registry';
+import { CliRegistry, cliLaunchArgs, escapeNativeArg } from '../src/clis/cli-registry';
 import { loadConfig } from '../src/config';
 import { TEST_SHELL, makeDataDir, startTestServer, waitFor } from './helpers';
 
@@ -84,8 +84,19 @@ describe('cliLaunchArgs', () => {
     expect(args).toEqual([
       '-NoLogo',
       '-Command',
-      "& 'C:\\Program Files\\it''s\\x.exe' '--flag' 'a b'; exit $LASTEXITCODE",
+      "$PSNativeCommandArgumentPassing = 'Legacy'; & 'C:\\Program Files\\it''s\\x.exe' '--flag' 'a b'; exit $LASTEXITCODE",
     ]);
+  });
+});
+
+describe('escapeNativeArg', () => {
+  it.each([
+    ['plain', 'plain'],
+    ['say "hi" now', 'say \\"hi\\" now'],
+    ['path C:\\dir\\', 'path C:\\dir\\\\'],
+    ['a\\"b', 'a\\\\\\"b'],
+  ])('%j -> %j', (input, expected) => {
+    expect(escapeNativeArg(input)).toBe(expected);
   });
 });
 
@@ -101,7 +112,13 @@ describe('CLI sessions over the API', () => {
 
   it('lists CLIs from the config file', async () => {
     const body = (await (await server.api('/api/clis')).json()) as { clis: CliInfo[] };
-    expect(body.clis.map((c) => c.id)).toEqual(['fake', 'off', 'fake-hooks']);
+    expect(body.clis.map((c) => c.id)).toEqual([
+      'fake',
+      'off',
+      'fake-hooks',
+      'fake-menu',
+      'fake-arg',
+    ]);
   });
 
   it('launches the configured command for a cliId', async () => {

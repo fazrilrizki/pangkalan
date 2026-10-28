@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import type { FastifyInstance } from 'fastify';
@@ -6,10 +5,8 @@ import type { WebSocket } from 'ws';
 import { z } from 'zod';
 import { WS_CLOSE_SESSION_NOT_FOUND, clientMessageSchema } from '@integrasi/shared';
 import type { CliRegistry } from '../clis/cli-registry';
-import { cliLaunchArgs } from '../clis/cli-registry';
 import type { ProjectStore } from '../projects/project-store';
-import type { ClaudeHookSetup } from '../sessions/claude-hooks';
-import { prepareClaudeHooks } from '../sessions/claude-hooks';
+import { LaunchError, launchSession } from '../sessions/launch';
 import type { SessionManager } from '../sessions/session-manager';
 
 // The command to run is never taken from the request: only a cliId that maps to the config file.
@@ -54,37 +51,16 @@ export async function sessionRoutes(
       return reply.code(400).send({ error: 'cwd is not a directory' });
     }
 
-    const id = randomUUID();
-    const shell = clis.shell;
-    let args = shell.args;
-    let hooks: ClaudeHookSetup | undefined;
-    let title = 'Shell';
-    let waitingPatterns: RegExp[] = [];
-    if (cliId !== undefined) {
-      const cli = clis.get(cliId);
-      if (!cli) return reply.code(400).send({ error: `unknown cli "${cliId}"` });
-      if (!cli.enabled) return reply.code(400).send({ error: `cli "${cliId}" is disabled` });
-      if (cli.statusMode === 'hooks') hooks = prepareClaudeHooks(id, port);
-      args = cliLaunchArgs(shell, cli, hooks?.args);
-      title = cli.name;
-      waitingPatterns = cli.waitingPatterns.map((p) => new RegExp(p));
+    try {
+      const session = launchSession(
+        { sessions, clis, port },
+        { cwd, cliId: cliId ?? null, projectId: projectId ?? null, cols, rows },
+      );
+      return reply.code(201).send(session.info());
+    } catch (err) {
+      if (err instanceof LaunchError) return reply.code(400).send({ error: err.message });
+      throw err;
     }
-
-    const session = sessions.create({
-      id,
-      file: shell.file,
-      args,
-      cwd,
-      cols,
-      rows,
-      projectId: projectId ?? null,
-      cliId: cliId ?? null,
-      title,
-      waitingPatterns,
-      hookSecret: hooks?.secret,
-      cleanup: hooks?.cleanup,
-    });
-    return reply.code(201).send(session.info());
   });
 
   app.delete<{ Params: { id: string } }>('/api/sessions/:id', async (request, reply) => {

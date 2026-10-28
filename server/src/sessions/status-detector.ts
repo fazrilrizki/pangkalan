@@ -4,9 +4,21 @@ export type LiveStatus = Exclude<SessionStatus, 'exited' | 'error'>;
 
 // eslint-disable-next-line no-control-regex
 const ANSI = /\x1b\[[0-?]*[ -/]*[@-~]|\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)|\x1b[@-Z\\-_]/g;
+// eslint-disable-next-line no-control-regex
+const CURSOR_FORWARD = /\x1b\[(\d*)C/g;
+// eslint-disable-next-line no-control-regex
+const CURSOR_POSITION = /\x1b\[\d*(?:;\d*)?[Hf]/g;
 
+/**
+ * Plain text of terminal output. TUIs such as Claude Code draw the gaps between words with
+ * cursor moves instead of spaces, so those become spaces and line jumps become newlines;
+ * otherwise "Enter to confirm" would read as "Entertoconfirm".
+ */
 export function stripAnsi(text: string): string {
-  return text.replace(ANSI, '');
+  return text
+    .replace(CURSOR_FORWARD, (_, n: string) => ' '.repeat(Math.min(Number(n || 1), 200)))
+    .replace(CURSOR_POSITION, '\n')
+    .replace(ANSI, '');
 }
 
 export function detectStatus(input: {
@@ -67,6 +79,11 @@ export class StatusTracker {
     this.outputSinceInput = (this.outputSinceInput + data).slice(-MAX_TAIL);
     const isEcho = now - this.lastInputAt < this.echoWindowMs && data.length <= this.echoMaxChars;
     if (!isEcho) this.lastActivityAt = now;
+  }
+
+  /** Plain text the program printed since the last keystroke (at most the last 4 KB). */
+  textSinceInput(): string {
+    return stripAnsi(this.outputSinceInput);
   }
 
   onHook(status: LiveStatus) {

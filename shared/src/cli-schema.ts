@@ -21,6 +21,14 @@ export const cliSchema = z.object({
     .default('#8b93a7'),
   statusMode: z.enum(['hooks', 'heuristic']).default('heuristic'),
   waitingPatterns: z.array(z.string().refine(isValidRegex, 'invalid regex')).default([]),
+  /**
+   * How to start the CLI with an initial prompt, `{prompt}` marking where it goes, e.g.
+   * `["{prompt}"]` for `claude "..."`. Without it, an arena types the prompt in instead.
+   */
+  promptArgs: z
+    .array(z.string())
+    .refine((args) => args.some((a) => a.includes('{prompt}')), 'must contain {prompt}')
+    .optional(),
   enabled: z.boolean().default(true),
 });
 export type CliConfig = z.infer<typeof cliSchema>;
