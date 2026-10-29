@@ -1,11 +1,13 @@
-import { Fragment, useEffect, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import { ArenaBar } from './components/ArenaBar';
 import { ArenaPaneHeader } from './components/ArenaPaneHeader';
 import { CompareDialog } from './components/CompareDialog';
 import { ExitBanner } from './components/ExitBanner';
 import { Icon } from './components/Icon';
 import { Logo } from './components/Logo';
+import { PreviewPane } from './components/PreviewPane';
 import { Sidebar } from './components/Sidebar';
+import { Splitter } from './components/Splitter';
 import { StatusBar } from './components/StatusBar';
 import { TabBar } from './components/TabBar';
 import { TerminalPane } from './components/TerminalPane';
@@ -14,6 +16,7 @@ import { ApiError } from './lib/api';
 import { SHORTCUT_HELP } from './lib/shortcuts';
 import { useAppStore } from './stores/app-store';
 import { arenaOf, useArenaStore } from './stores/arena-store';
+import { usePreviewStore } from './stores/preview-store';
 
 export function App() {
   const loaded = useAppStore((s) => s.loaded);
@@ -35,6 +38,10 @@ export function App() {
       : [];
   const grid = sideBySide.length > 1;
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const previewOpen = usePreviewStore((s) => s.open);
+  const previewWidth = usePreviewStore((s) => s.width);
+  const workspaceRef = useRef<HTMLDivElement>(null);
+  const showPreview = previewOpen && !!active;
   useShortcuts();
   useWaitingTitle();
 
@@ -112,63 +119,83 @@ export function App() {
         )}
         <TabBar />
         {arena && <ArenaBar arena={arena} />}
-        <section
-          className={`relative min-h-0 flex-1 bg-term ${
-            grid ? 'grid auto-rows-fr grid-cols-1 gap-px bg-line md:grid-cols-2' : 'py-2 pr-1 pl-3'
-          }`}
-        >
-          {order.map((id) => {
-            const inGrid = grid && sideBySide.includes(id);
-            return (
-              <TerminalPane
-                key={id}
-                sessionId={id}
-                active={grid ? inGrid : id === activeId}
-                focused={id === activeId}
-                header={(() => {
-                  const entry = inGrid ? arena?.entries.find((e) => e.sessionId === id) : undefined;
-                  return (
-                    arena &&
-                    entry && (
-                      <ArenaPaneHeader
-                        arena={arena}
-                        entry={entry}
-                        sessionId={id}
-                        focused={id === activeId}
-                      />
-                    )
-                  );
-                })()}
-                onServerMessage={(message) => applyServerMessage(id, message)}
-                onConnectionChange={(state) => setConnection(id, state)}
-              />
-            );
-          })}
-          {active && active.exitCode !== null && <ExitBanner key={active.id} session={active} />}
-          {loaded && order.length === 0 && (
-            <div className="grid h-full place-items-center overflow-y-auto px-4 text-sm text-muted">
-              <div className="max-w-sm">
-                <p className="text-lg font-semibold text-fg">Belum ada sesi terbuka</p>
-                <p className="mt-1.5 leading-relaxed">
-                  Klik project di sidebar, lalu pilih CLI untuk membuka terminal di foldernya.
-                </p>
-                <h2 className="mt-8 mb-2 text-xs font-medium text-fg">Shortcut</h2>
-                <dl className="grid grid-cols-[auto_1fr] items-baseline gap-x-4 gap-y-2 border-t border-line pt-3 text-xs">
-                  {SHORTCUT_HELP.map(([keys, label]) => (
-                    <Fragment key={keys}>
-                      <dt>
-                        <kbd className="rounded border border-line-strong bg-panel px-1.5 py-0.5 font-mono text-[11px] text-fg">
-                          {keys}
-                        </kbd>
-                      </dt>
-                      <dd>{label}</dd>
-                    </Fragment>
-                  ))}
-                </dl>
+        <div ref={workspaceRef} className="flex min-h-0 flex-1">
+          <section
+            className={`relative min-h-0 min-w-0 flex-1 bg-term ${
+              grid
+                ? 'grid auto-rows-fr grid-cols-1 gap-px bg-line md:grid-cols-2'
+                : 'py-2 pr-1 pl-3'
+            }`}
+          >
+            {order.map((id) => {
+              const inGrid = grid && sideBySide.includes(id);
+              return (
+                <TerminalPane
+                  key={id}
+                  sessionId={id}
+                  active={grid ? inGrid : id === activeId}
+                  focused={id === activeId}
+                  header={(() => {
+                    const entry = inGrid
+                      ? arena?.entries.find((e) => e.sessionId === id)
+                      : undefined;
+                    return (
+                      arena &&
+                      entry && (
+                        <ArenaPaneHeader
+                          arena={arena}
+                          entry={entry}
+                          sessionId={id}
+                          focused={id === activeId}
+                        />
+                      )
+                    );
+                  })()}
+                  onServerMessage={(message) => applyServerMessage(id, message)}
+                  onConnectionChange={(state) => setConnection(id, state)}
+                />
+              );
+            })}
+            {active && active.exitCode !== null && <ExitBanner key={active.id} session={active} />}
+            {loaded && order.length === 0 && (
+              <div className="grid h-full place-items-center overflow-y-auto px-4 text-sm text-muted">
+                <div className="max-w-sm">
+                  <p className="text-lg font-semibold text-fg">Belum ada sesi terbuka</p>
+                  <p className="mt-1.5 leading-relaxed">
+                    Klik project di sidebar, lalu pilih CLI untuk membuka terminal di foldernya.
+                  </p>
+                  <h2 className="mt-8 mb-2 text-xs font-medium text-fg">Shortcut</h2>
+                  <dl className="grid grid-cols-[auto_1fr] items-baseline gap-x-4 gap-y-2 border-t border-line pt-3 text-xs">
+                    {SHORTCUT_HELP.map(([keys, label]) => (
+                      <Fragment key={keys}>
+                        <dt>
+                          <kbd className="rounded border border-line-strong bg-panel px-1.5 py-0.5 font-mono text-[11px] text-fg">
+                            {keys}
+                          </kbd>
+                        </dt>
+                        <dd>{label}</dd>
+                      </Fragment>
+                    ))}
+                  </dl>
+                </div>
               </div>
-            </div>
+            )}
+          </section>
+          {/* Preview needs room next to the terminal; on phones it is not offered. */}
+          {showPreview && (
+            <>
+              <div className="hidden md:flex">
+                <Splitter container={workspaceRef} />
+              </div>
+              <div
+                className="hidden min-w-0 shrink-0 md:block"
+                style={{ width: `${previewWidth * 100}%` }}
+              >
+                <PreviewPane />
+              </div>
+            </>
           )}
-        </section>
+        </div>
         {active && <StatusBar session={active} />}
       </main>
       <CompareDialog arena={comparing} />

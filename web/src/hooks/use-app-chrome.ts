@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { matchShortcut } from '../lib/shortcuts';
 import { useAppStore } from '../stores/app-store';
+import { usePreviewStore } from '../stores/preview-store';
 
 /** Global keyboard shortcuts (see lib/shortcuts for why they use Ctrl+Alt). */
 export function useShortcuts() {
@@ -20,6 +21,9 @@ export function useShortcuts() {
           break;
         case 'cycle':
           store.cycleActive(action.step);
+          break;
+        case 'preview':
+          usePreviewStore.getState().toggle();
           break;
         case 'jump': {
           const id = store.order[action.index];

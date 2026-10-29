@@ -1,6 +1,8 @@
 import fs from 'node:fs';
+import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
+import type { AddressInfo } from 'node:net';
 import type { Page } from '@playwright/test';
 import { expect, test } from '@playwright/test';
 import { E2E_DATA_DIR, E2E_TOKEN } from '../playwright.config';
@@ -131,6 +133,60 @@ test('a CLI added to clis.json shows up without restarting', async ({ page }) =>
     await projectRow(page, folder).click();
     await expect(picker.getByRole('button', { name: 'Echo CLI' })).toBeVisible({ timeout: 500 });
   }).toPass({ timeout: 10_000 });
+});
+
+test('previews the dev server a session prints, and keeps a manual URL', async ({ page }) => {
+  const site = (text: string) =>
+    http.createServer((_, res) => {
+      res.setHeader('content-type', 'text/html');
+      res.end(`<!doctype html><title>site</title><h1>${text}</h1>`);
+    });
+  const detected = site('Halo preview');
+  const manual = site('Halo manual');
+  await new Promise<void>((resolve) => detected.listen(0, '127.0.0.1', resolve));
+  await new Promise<void>((resolve) => manual.listen(0, '127.0.0.1', resolve));
+  const port = (server: http.Server) => (server.address() as AddressInfo).port;
+
+  try {
+    const folder = makeProjectFolder('e2e-preview');
+    await addProject(page, folder);
+    await openFakeCli(page, folder);
+    await expect(activeTab(page).getByRole('img', { name: 'Siap' })).toBeVisible({
+      timeout: 15_000,
+    });
+
+    await page.keyboard.press('Control+Alt+KeyP');
+    const pane = page.getByRole('region', { name: 'Preview web' });
+    await expect(pane.getByText('Belum ada dev server terdeteksi')).toBeVisible();
+
+    await page.locator('.xterm').first().click();
+    await typeInActiveTerminal(page, `serve http://localhost:${port(detected)}/`);
+    const frame = page.frameLocator('iframe[title^="Preview"]');
+    await expect(frame.getByRole('heading', { name: 'Halo preview' })).toBeVisible();
+    await expect(pane.getByText('otomatis', { exact: true })).toBeVisible();
+
+    const field = pane.getByLabel('URL preview');
+    await field.fill(`localhost:${port(manual)}`);
+    await field.press('Enter');
+    await expect(frame.getByRole('heading', { name: 'Halo manual' })).toBeVisible();
+
+    await page.reload();
+    await expect(
+      page.frameLocator('iframe[title^="Preview"]').getByRole('heading', { name: 'Halo manual' }),
+    ).toBeVisible();
+
+    await pane.getByRole('button', { name: 'HP' }).click();
+    await expect(pane.getByText('HP · 390px')).toBeVisible();
+    await pane.getByRole('button', { name: 'Pakai otomatis' }).click();
+    await expect(
+      page.frameLocator('iframe[title^="Preview"]').getByRole('heading', { name: 'Halo preview' }),
+    ).toBeVisible();
+    await pane.getByRole('button', { name: 'Tutup preview' }).click();
+    await expect(pane).toHaveCount(0);
+  } finally {
+    detected.close();
+    manual.close();
+  }
 });
 
 test('rejects the API without the token', async ({ request }) => {

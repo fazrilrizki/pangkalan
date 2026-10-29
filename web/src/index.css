@@ -197,3 +197,31 @@ body {
   direction: rtl;
   text-align: left;
 }
+
+/* Preview load bar: grows toward the right while the iframe fetches, then is removed on load.
+   With reduced motion it is a static bar. */
+.preview-progress {
+  transform-origin: left;
+  animation: preview-load 1.5s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+}
+
+@keyframes preview-load {
+  from {
+    transform: scaleX(0.05);
+  }
+  to {
+    transform: scaleX(0.85);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .preview-progress {
+    animation: none;
+    transform: scaleX(0.5);
+  }
+}
+
+/* While the splitter is dragged the iframe must not swallow pointer events. */
+[data-resizing] iframe {
+  pointer-events: none;
+}

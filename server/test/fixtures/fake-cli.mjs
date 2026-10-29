@@ -3,6 +3,7 @@
 //   spam    -> prints continuously for ~1.5s
 //   exit N  -> exits with code N
 //   write F T -> writes text T to file F in the working directory
+//   serve URL -> prints URL the way Vite announces its dev server
 // Bracketed-paste markers are ignored, so a pasted prompt runs like a typed line.
 // With --menu it opens on a choice menu (like Claude's folder-trust dialog); the first line
 // answers the menu instead of running as a command.
@@ -45,6 +46,9 @@ function run(line) {
   } else if (command === 'write') {
     fs.writeFileSync(arg, `${rest.join(' ')}\n`);
     process.stdout.write(`wrote ${arg}\r\n`);
+  } else if (command === 'serve') {
+    process.stdout.write(`  [32m➜[39m  [1mLocal[22m:   [36m${arg}[39m
+`);
   } else if (command === 'exit') {
     process.exit(Number(arg ?? 0));
   } else {

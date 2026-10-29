@@ -1,5 +1,6 @@
 import { spawnSync } from 'node:child_process';
 import type { ServerMessage, SessionInfo, SessionStatus } from '@integrasi/shared';
+import { extractLocalUrls } from './preview-url';
 import type { PtyProcess } from './pty';
 import { RingBuffer } from './ring-buffer';
 import type { LiveStatus, StatusTrackerOptions } from './status-detector';
@@ -32,7 +33,14 @@ export interface SessionOptions {
   hookSecret?: string;
   /** Runs once when the process ends, e.g. to delete per-session temp files. */
   cleanup?: () => void;
+  /** Ports never offered as a preview, e.g. Pangkalan's own hook endpoint. */
+  ignorePreviewPorts?: readonly number[];
 }
+
+/** Output kept from the previous chunk so a URL split across chunks is still found. */
+const URL_CARRY_CHARS = 200;
+/** Output silence after which a URL at the end of the output counts as complete. */
+const URL_QUIET_MS = 150;
 
 /** A running PTY plus its scrollback. Lives independently of any connected client. */
 export class Session {
@@ -44,6 +52,10 @@ export class Session {
   private status: SessionStatus = 'working';
   private exitCode: number | null = null;
   private killRequested = false;
+  private previewUrl: string | null = null;
+  private previewDetectedAt: string | null = null;
+  private urlCarry = '';
+  private urlQuietTimer: ReturnType<typeof setTimeout> | undefined;
   readonly hookSecret: string | null;
 
   constructor(
@@ -61,9 +73,11 @@ export class Session {
       this.buffer.push(data);
       this.tracker.onOutput(data);
       this.broadcast({ type: 'output', data });
+      this.detectPreviewUrl(data, options.ignorePreviewPorts ?? []);
     });
     pty.onExit((code) => {
       clearInterval(this.statusTimer);
+      clearTimeout(this.urlQuietTimer);
       options.cleanup?.();
       this.exitCode = code;
       this.setStatus(this.killRequested || code === 0 ? 'exited' : 'error');
@@ -89,6 +103,8 @@ export class Session {
       status: this.status,
       exitCode: this.exitCode,
       createdAt: this.createdAt,
+      previewUrl: this.previewUrl,
+      previewDetectedAt: this.previewDetectedAt,
     };
   }
 
@@ -96,6 +112,9 @@ export class Session {
   attach(listener: SessionListener): () => void {
     listener({ type: 'replay', data: this.buffer.toString() });
     listener({ type: 'status', status: this.status });
+    if (this.previewUrl && this.previewDetectedAt) {
+      listener({ type: 'preview', url: this.previewUrl, detectedAt: this.previewDetectedAt });
+    }
     if (this.exitCode !== null) listener({ type: 'exit', code: this.exitCode });
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);
@@ -132,7 +151,31 @@ export class Session {
 
   dispose() {
     clearInterval(this.statusTimer);
+    clearTimeout(this.urlQuietTimer);
     this.kill();
+  }
+
+  /**
+   * A URL at the very end of a chunk may be cut off, so it waits until more output follows
+   * it or the output goes quiet (ConPTY often sends nothing after the last line printed).
+   */
+  private detectPreviewUrl(data: string, ignorePorts: readonly number[]) {
+    const text = this.urlCarry + data;
+    this.urlCarry = text.slice(-URL_CARRY_CHARS);
+    this.usePreviewUrl(extractLocalUrls(text, { ignorePorts, streaming: true }).at(-1));
+    clearTimeout(this.urlQuietTimer);
+    this.urlQuietTimer = setTimeout(
+      () => this.usePreviewUrl(extractLocalUrls(this.urlCarry, { ignorePorts }).at(-1)),
+      URL_QUIET_MS,
+    );
+    this.urlQuietTimer.unref();
+  }
+
+  private usePreviewUrl(url: string | undefined) {
+    if (!url || url === this.previewUrl) return;
+    this.previewUrl = url;
+    this.previewDetectedAt = new Date().toISOString();
+    this.broadcast({ type: 'preview', url, detectedAt: this.previewDetectedAt });
   }
 
   private refreshStatus() {

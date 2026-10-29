@@ -12,6 +12,9 @@ export interface SessionInfo {
   status: SessionStatus;
   exitCode: number | null;
   createdAt: string;
+  /** Last local dev-server URL seen in the output, for the preview pane. */
+  previewUrl: string | null;
+  previewDetectedAt: string | null;
 }
 
 export const clientMessageSchema = z.discriminatedUnion('type', [
@@ -28,7 +31,8 @@ export type ServerMessage =
   | { type: 'replay'; data: string }
   | { type: 'output'; data: string }
   | { type: 'status'; status: SessionStatus }
-  | { type: 'exit'; code: number };
+  | { type: 'exit'; code: number }
+  | { type: 'preview'; url: string; detectedAt: string };
 
 /** WebSocket close code sent when the requested session does not exist. */
 export const WS_CLOSE_SESSION_NOT_FOUND = 4404;

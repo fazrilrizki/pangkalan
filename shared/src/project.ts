@@ -6,6 +6,8 @@ export interface Project {
   path: string;
   favorite: boolean;
   createdAt: string;
+  /** URL the preview pane opens, set by hand; null means use the detected dev server. */
+  previewUrl: string | null;
 }
 
 export const createProjectSchema = z.object({
@@ -18,6 +20,11 @@ export const updateProjectSchema = z
   .object({
     name: z.string().trim().min(1).max(100).optional(),
     favorite: z.boolean().optional(),
+    previewUrl: z
+      .url({ protocol: /^https?$/ })
+      .max(2048)
+      .nullable()
+      .optional(),
   })
-  .refine((v) => v.name !== undefined || v.favorite !== undefined, 'nothing to update');
+  .refine((v) => Object.values(v).some((x) => x !== undefined), 'nothing to update');
 export type UpdateProjectInput = z.infer<typeof updateProjectSchema>;
