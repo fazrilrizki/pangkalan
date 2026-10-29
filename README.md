@@ -90,6 +90,17 @@ Merge ditolak tanpa mengubah apa pun bila branch asal sedang tidak aktif atau pu
 
 Project harus berupa repo git dengan minimal satu commit. Perubahan yang belum di-commit di folder project tidak ikut terlihat oleh peserta.
 
+## Preview web
+
+Lihat hasil perubahan tampilan tanpa pindah ke tab browser lain. Klik **Preview** di ujung kanan bar tab atau tekan `Ctrl+Alt+P`. Panel muncul di kanan terminal; geser pembatasnya untuk mengubah lebar (atau fokus lalu tombol panah, klik dua kali untuk 50:50).
+
+- **URL otomatis.** Pangkalan membaca output terminal dan memakai URL `localhost` / `127.0.0.1` / `0.0.0.0` terakhir yang muncul, misalnya `Local: http://localhost:5173/` dari `npm run dev`. Dev server boleh jalan di tab lain dari project yang sama. Sesi aktif yang punya URL sendiri (mis. peserta adu agen di port berbeda) memakai URL-nya sendiri.
+- **URL manual.** Ketik di kolom alamat lalu Enter; disimpan per project di `data/projects.json` dan mengalahkan deteksi otomatis. **Pakai otomatis** menghapusnya. Ini berguna bila Claude Code menjalankan dev server sebagai background task, sehingga URL-nya tidak tampil di terminal.
+- **Ukuran layar.** Desktop, Tablet (820px), atau HP (390px) untuk mengecek tampilan responsif.
+- Perubahan kode langsung terlihat lewat HMR dev server. Tombol muat ulang tersedia untuk server tanpa HMR.
+
+Batasan: preview hanya jalan saat Pangkalan dibuka di laptop (dari HP, `localhost` berarti HP itu sendiri). Situs yang mengirim `X-Frame-Options` atau CSP `frame-ancestors` menolak ditampilkan di iframe; buka lewat tombol **Buka di tab baru**.
+
 ## Akses dari HP (Tailscale)
 
 Pantau dan jawab sesi yang menunggu input dari HP, tanpa membuka server ke internet. Mode ini **mati secara default**.
@@ -119,6 +130,7 @@ Di layar sempit, di bawah terminal ada tombol cepat (`y`, `n`, `Enter`, `Esc`, `
 | `Ctrl+Alt+W`                | Tutup tab aktif (konfirmasi bila proses masih jalan) |
 | `Ctrl+Alt+]` / `Ctrl+Alt+[` | Tab berikut / sebelumnya                             |
 | `Ctrl+Alt+1…9`              | Lompat ke tab                                        |
+| `Ctrl+Alt+P`                | Tampilkan / sembunyikan preview web                  |
 
 `Ctrl+Shift+T/W` dan `Ctrl+Tab` tidak dipakai karena dicadangkan Chrome. Pada layout keyboard yang memakai AltGr (`Ctrl+Alt`) untuk karakter `[`/`]`, gunakan `Ctrl+Alt+angka`.
 

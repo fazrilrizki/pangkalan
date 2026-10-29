@@ -24,6 +24,13 @@ describe('ProjectStore', () => {
     expect(fs.readdirSync(path.dirname(file)).filter((f) => f.endsWith('.tmp'))).toEqual([]);
   });
 
+  it('reads projects saved before previewUrl existed', () => {
+    const file = path.join(makeDataDir(), 'projects.json');
+    const old = { id: 'p1', name: 'old', path: 'C:\\old', favorite: false, createdAt: 'x' };
+    fs.writeFileSync(file, JSON.stringify({ projects: [old] }));
+    expect(new ProjectStore(file).get('p1')?.previewUrl).toBeNull();
+  });
+
   it('starts empty when the file is missing or corrupt', () => {
     const file = path.join(makeDataDir(), 'projects.json');
     expect(new ProjectStore(file).list()).toEqual([]);
@@ -58,6 +65,27 @@ describe('projects API', () => {
     expect(fs.existsSync(folder)).toBe(true);
     const list = (await (await json('GET', '/api/projects')).json()) as Project[];
     expect(list.find((p) => p.id === project.id)).toBeUndefined();
+  });
+
+  it('sets, validates and clears a manual preview URL', async () => {
+    const folder = tempFolder('preview');
+    const project = (await (
+      await json('POST', '/api/projects', { path: folder })
+    ).json()) as Project;
+    expect(project.previewUrl).toBeNull();
+
+    const url = 'http://localhost:5173/app';
+    const set = await json('PATCH', `/api/projects/${project.id}`, { previewUrl: url });
+    expect(((await set.json()) as Project).previewUrl).toBe(url);
+
+    for (const bad of ['javascript:alert(1)', 'file:///C:/x', 'not a url']) {
+      expect((await json('PATCH', `/api/projects/${project.id}`, { previewUrl: bad })).status).toBe(
+        400,
+      );
+    }
+
+    const cleared = await json('PATCH', `/api/projects/${project.id}`, { previewUrl: null });
+    expect(((await cleared.json()) as Project).previewUrl).toBeNull();
   });
 
   it('rejects a missing folder, a duplicate folder, and an empty patch', async () => {

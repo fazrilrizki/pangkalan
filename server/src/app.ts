@@ -40,7 +40,7 @@ export async function buildApp({
   config,
   token,
   logger = false,
-  sessions = new SessionManager(),
+  sessions = new SessionManager({ ignorePreviewPorts: [config.port] }),
   clis,
   tailscale = new Tailscale(config.port),
 }: AppOptions) {

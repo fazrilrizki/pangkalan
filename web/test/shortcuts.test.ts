@@ -17,6 +17,7 @@ describe('matchShortcut', () => {
       type: 'cycle',
       step: 1,
     });
+    expect(matchShortcut(key('KeyP', { ctrl: true, alt: true }))).toEqual({ type: 'preview' });
     expect(matchShortcut(key('Digit3', { ctrl: true, alt: true }))).toEqual({
       type: 'jump',
       index: 2,

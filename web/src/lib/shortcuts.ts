@@ -2,7 +2,8 @@ export type ShortcutAction =
   | { type: 'new' }
   | { type: 'close' }
   | { type: 'cycle'; step: 1 | -1 }
-  | { type: 'jump'; index: number };
+  | { type: 'jump'; index: number }
+  | { type: 'preview' };
 
 /**
  * App shortcuts use Ctrl+Alt so they never collide with the browser (Ctrl+Shift+T/W and
@@ -21,6 +22,8 @@ export function matchShortcut(
       return { type: 'cycle', step: 1 };
     case 'BracketLeft':
       return { type: 'cycle', step: -1 };
+    case 'KeyP':
+      return { type: 'preview' };
   }
   const digit = /^Digit([1-9])$/.exec(e.code);
   return digit ? { type: 'jump', index: Number(digit[1]) - 1 } : null;
@@ -31,4 +34,5 @@ export const SHORTCUT_HELP: [string, string][] = [
   ['Ctrl+Alt+W', 'Tutup tab aktif'],
   ['Ctrl+Alt+] / [', 'Tab berikut / sebelumnya'],
   ['Ctrl+Alt+1…9', 'Lompat ke tab'],
+  ['Ctrl+Alt+P', 'Tampilkan / sembunyikan preview web'],
 ];

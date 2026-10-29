@@ -213,12 +213,16 @@ export const useAppStore = create<AppState>()((set, get) => ({
   },
 
   applyServerMessage(id, message) {
-    if (message.type !== 'status' && message.type !== 'exit') return;
+    if (message.type === 'replay' || message.type === 'output') return;
     set((s) => {
       const session = s.sessions[id];
       if (!session) return s;
       const patch =
-        message.type === 'status' ? { status: message.status } : { exitCode: message.code };
+        message.type === 'status'
+          ? { status: message.status }
+          : message.type === 'exit'
+            ? { exitCode: message.code }
+            : { previewUrl: message.url, previewDetectedAt: message.detectedAt };
       return { sessions: { ...s.sessions, [id]: { ...session, ...patch } } };
     });
   },

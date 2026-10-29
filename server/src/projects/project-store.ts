@@ -45,6 +45,7 @@ export class ProjectStore {
       path: resolved,
       favorite: false,
       createdAt: new Date().toISOString(),
+      previewUrl: null,
     };
     this.projects.push(project);
     this.write();
@@ -69,7 +70,9 @@ export class ProjectStore {
   private read(): Project[] {
     try {
       const data = JSON.parse(fs.readFileSync(this.file, 'utf8')) as { projects?: Project[] };
-      return Array.isArray(data.projects) ? data.projects : [];
+      if (!Array.isArray(data.projects)) return [];
+      // Projects saved before the preview pane existed have no previewUrl.
+      return data.projects.map((p) => ({ ...p, previewUrl: p.previewUrl ?? null }));
     } catch {
       return [];
     }

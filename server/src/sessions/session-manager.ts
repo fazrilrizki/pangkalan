@@ -12,6 +12,8 @@ export interface SessionManagerOptions {
   statusIntervalMs?: number;
   /** Tuning shared by every session's status tracker (patterns come per session). */
   status?: Omit<StatusTrackerOptions, 'waitingPatterns'>;
+  /** Ports never offered as a preview URL (Pangkalan's own port). */
+  ignorePreviewPorts?: number[];
 }
 
 export interface CreateSessionOptions extends Omit<SessionMeta, 'id'> {
@@ -55,6 +57,7 @@ export class SessionManager {
       status: { ...this.options.status, waitingPatterns },
       hookSecret,
       cleanup,
+      ignorePreviewPorts: this.options.ignorePreviewPorts,
     });
     this.sessions.set(id, session);
     return session;

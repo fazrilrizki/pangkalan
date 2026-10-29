@@ -11,6 +11,8 @@ const session = (id: string, createdAt: string, extra: Partial<SessionInfo> = {}
   status: 'idle',
   exitCode: null,
   createdAt,
+  previewUrl: null,
+  previewDetectedAt: null,
   ...extra,
 });
 
@@ -47,6 +49,20 @@ describe('app store', () => {
     'GET /api/projects': () => [],
     'GET /api/clis': () => ({ clis: [] }),
     'GET /api/sessions': () => sessions,
+  });
+
+  it('records a dev-server URL reported by a session', async () => {
+    mockApi(baseRoutes([session('a', '2026-01-01')]));
+    await useAppStore.getState().load();
+    useAppStore.getState().applyServerMessage('a', {
+      type: 'preview',
+      url: 'http://localhost:5173/',
+      detectedAt: '2026-01-01T00:00:01Z',
+    });
+    expect(useAppStore.getState().sessions.a).toMatchObject({
+      previewUrl: 'http://localhost:5173/',
+      previewDetectedAt: '2026-01-01T00:00:01Z',
+    });
   });
 
   it('restores open sessions as tabs in creation order', async () => {
