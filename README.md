@@ -1,6 +1,6 @@
 # Pangkalan
 
-Web app lokal untuk menjalankan AI CLI (Claude Code, Antigravity, atau CLI lain) di **terminal asli dalam tab browser**. Pilih project, pilih CLI, kerja. Tidak perlu lagi buka banyak jendela terminal dan `cd` ke folder project.
+Web app lokal untuk menjalankan AI CLI (Claude Code, OpenCode, Antigravity, atau CLI lain) di **terminal asli dalam tab browser**. Pilih project, pilih CLI, kerja. Tidak perlu lagi buka banyak jendela terminal dan `cd` ke folder project.
 
 - Sidebar project (favorit di atas), klik → pilih CLI → terminal terbuka di folder itu
 - Banyak tab sekaligus; status tiap sesi tampil sebagai animasi: **biru berdenyut** = bekerja, **kuning berkedip** = menunggu input, **hijau** = siap, **merah/abu** = berhenti
@@ -14,7 +14,7 @@ Web app lokal untuk menjalankan AI CLI (Claude Code, Antigravity, atau CLI lain)
 
 - Windows 10/11 (shell default PowerShell)
 - Node.js 24+
-- CLI yang ingin dipakai sudah terpasang dan login di laptop (mis. `claude`)
+- CLI yang ingin dipakai sudah terpasang dan login di laptop (mis. `claude` atau `opencode`)
 
 ## Mulai
 
@@ -67,6 +67,10 @@ Saat pertama jalan, `data/clis.example.json` disalin ke `data/clis.json`. Edit f
 | `enabled`         | `false` untuk menyembunyikan CLI dari pilihan                                                                        |
 
 Entri yang tidak valid dilewati dan alasannya dicatat di log server; entri lain tetap jalan. `shell` harus PowerShell (`powershell.exe` atau `pwsh`).
+
+### OpenCode
+
+Preset `opencode` aktif dan menjalankan `opencode` di folder project. Adu agen memberi prompt awal lewat `--prompt`, jadi tidak perlu mengetik ulang. Status memakai heuristik: dialog izin OpenCode ("Permission required", "Allow once", "Always allow") dan dialog pertanyaan ("Select answer", "Submit answer") dianggap menunggu input.
 
 ### Antigravity
 

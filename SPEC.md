@@ -19,7 +19,7 @@ Web app yang jalan di **localhost** untuk menjalankan AI CLI agent (Claude Code,
 4. **Status animasi** — Tiap tab (dan entri sidebar) tampil status: `working` (denyut biru), `waiting` (glow kuning berkedip), `idle` (hijau statis), `exited/error` (merah).
 5. **Notifikasi** — Saat sesi masuk `waiting` dan tab itu tidak aktif / browser tidak fokus → notifikasi browser.
 6. **Sesi persisten** — Refresh atau tutup browser tidak membunuh proses. Buka lagi → tab muncul kembali, scrollback terakhir ter-replay, input tersambung lagi.
-7. **CLI via config** — Saya tambah CLI baru (nama, command, args, ikon, warna) di file config tanpa ubah kode. Claude Code & Antigravity = preset bawaan.
+7. **CLI via config** — Saya tambah CLI baru (nama, command, args, ikon, warna) di file config tanpa ubah kode. Claude Code, OpenCode & Antigravity = preset bawaan.
 8. **Tutup sesi** — Saya bisa kill sesi secara eksplisit (konfirmasi dulu).
 
 ## Assumptions (koreksi jika salah)

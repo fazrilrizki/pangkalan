@@ -18,12 +18,17 @@ function registryFor(clisFile: unknown) {
 }
 
 describe('CliRegistry', () => {
-  it('seeds clis.json from the example with Claude enabled and Antigravity disabled', () => {
+  it('seeds clis.json from the example with Claude and OpenCode enabled, Antigravity disabled', () => {
     const dir = makeDataDir();
     const file = path.join(dir, 'fresh.json');
     const registry = new CliRegistry({ file, exampleFile, fallbackShell: TEST_SHELL });
     expect(fs.existsSync(file)).toBe(true);
     expect(registry.get('claude')).toMatchObject({ enabled: true, statusMode: 'hooks' });
+    expect(registry.get('opencode')).toMatchObject({
+      enabled: true,
+      statusMode: 'heuristic',
+      promptArgs: ['--prompt', '{prompt}'],
+    });
     expect(registry.get('antigravity')).toMatchObject({ enabled: false });
     expect(registry.errors).toEqual([]);
   });
