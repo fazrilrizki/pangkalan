@@ -17,6 +17,24 @@
       "enabled": true
     },
     {
+      "id": "opencode",
+      "name": "OpenCode",
+      "command": "opencode",
+      "args": [],
+      "icon": "opencode",
+      "color": "#8E8B8B",
+      "statusMode": "heuristic",
+      "waitingPatterns": [
+        "Permission required",
+        "Allow once",
+        "Always allow",
+        "Select answer",
+        "Submit answer"
+      ],
+      "promptArgs": ["--prompt", "{prompt}"],
+      "enabled": true
+    },
+    {
       "id": "antigravity",
       "name": "Antigravity",
       "command": "antigravity",

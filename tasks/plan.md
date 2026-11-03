@@ -126,3 +126,5 @@ Paralel aman (jika ada >1 sesi kerja): T2 ‖ T3; T6 ‖ T7; T11 ‖ T12.
 - **T13:** Shortcut diganti ke `Ctrl+Alt+…` karena `Ctrl+Shift+T/W` dan `Ctrl+Tab` dicadangkan Chrome (SPEC.md diperbarui).
 - **T14:** E2E memakai Chrome terpasang (`channel: 'chrome'`), tanpa mengunduh browser Playwright. Menemukan crash server saat resize PTY yang baru exit, sudah diperbaiki.
 - **T15:** Preset Antigravity tetap `enabled: false` sampai command-nya diketahui.
+- **OpenCode (2026-11-03):** Preset `opencode` aktif (heuristik, prompt awal lewat `--prompt`). Pola `waiting` dicocokkan dengan teks dialog OpenCode v2.2.5: `Permission required`, `Allow once`, `Always allow`, `Select answer`, `Submit answer`.
+- **Test root (2026-11-03):** `jsdom` dipin di devDependencies root. Vitest di-hoist ke root, jadi environment `jsdom` milik workspace web tidak bisa ia resolusi; versi 30 juga menuntut Node ≥ 24.15 sedangkan mesin ini 24.0.1.
